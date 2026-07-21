@@ -1,250 +1,178 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>DIN STORE API</title>
 
-<link rel="icon" href="/assets/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css">
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Poppins,sans-serif;
+}
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
+body{
+background:#0b1020;
+color:#fff;
+overflow-x:hidden;
+}
 
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+.bg{
+position:fixed;
+width:100%;
+height:100%;
+background:
+radial-gradient(circle at top,#2b6fff33,transparent 60%),
+radial-gradient(circle at bottom,#00ffcc22,transparent 60%);
+z-index:-1;
+}
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+header{
+padding:70px 20px;
+text-align:center;
+}
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+.logo{
+width:90px;
+height:90px;
+border-radius:50%;
+background:#1e40af;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:35px;
+margin:auto;
+box-shadow:0 0 30px #2563eb;
+}
+
+h1{
+margin-top:20px;
+font-size:40px;
+}
+
+p{
+color:#bdbdbd;
+margin-top:10px;
+}
+
+.box{
+max-width:1000px;
+margin:auto;
+padding:20px;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+}
+
+.card{
+background:#111827;
+border:1px solid #1f2937;
+border-radius:18px;
+padding:25px;
+transition:.3s;
+}
+
+.card:hover{
+transform:translateY(-5px);
+border-color:#2563eb;
+box-shadow:0 0 20px #2563eb55;
+}
+
+.card h2{
+margin-bottom:10px;
+font-size:20px;
+}
+
+.card p{
+font-size:14px;
+}
+
+.btn{
+display:inline-block;
+margin-top:15px;
+padding:10px 20px;
+border-radius:10px;
+background:#2563eb;
+text-decoration:none;
+color:white;
+}
+
+footer{
+padding:40px;
+text-align:center;
+color:#888;
+font-size:14px;
+}
+</style>
 
 </head>
-
 <body>
 
-<div class="bg-grid"></div>
-
-<div class="blur blur1"></div>
-<div class="blur blur2"></div>
-
-<nav>
-
-<div class="logo">
-
-<div class="logo-circle">
-D
-</div>
-
-<span>DIN STORE API</span>
-
-</div>
-
-<div class="menu">
-
-<a href="/">Home</a>
-
-<a href="/docs">Docs</a>
-
-<a href="/playground">Playground</a>
-
-<a href="/status">Status</a>
-
-</div>
-
-</nav>
+<div class="bg"></div>
 
 <header>
 
-<h1>
+<div class="logo">D</div>
 
-Modern REST API
+<h1>DIN STORE API</h1>
 
-</h1>
-
-<p>
-
-Fast • Reliable • Developer Friendly
-
-</p>
-
-<div class="search-box">
-
-<i class="fa-solid fa-magnifying-glass"></i>
-
-<input
-type="text"
-placeholder="Search endpoint..."
-id="search"
-/>
-
-</div>
-
-<div class="hero-btn">
-
-<a href="/docs" class="btn">
-
-Documentation
-
-</a>
-
-<a href="/playground" class="btn btn2">
-
-Playground
-
-</a>
-
-</div>
+<p>Fast • Free • Reliable REST API</p>
 
 </header>
 
-<section class="stats">
+<div class="box">
 
 <div class="card">
+<h2>📚 Documentation</h2>
+<p>Pelajari seluruh endpoint API.</p>
 
-<h2 id="endpointCount">0</h2>
-
-<p>Endpoint</p>
-
-</div>
-
-<div class="card">
-
-<h2>99.99%</h2>
-
-<p>Uptime</p>
+<a href="/docs" class="btn">
+Open Docs
+</a>
 
 </div>
 
 <div class="card">
+<h2>⚡ Playground</h2>
+<p>Coba endpoint secara langsung.</p>
 
-<h2>ONLINE</h2>
-
-<p>Status</p>
+<a href="/playground" class="btn">
+Try Now
+</a>
 
 </div>
 
 <div class="card">
+<h2>📡 API Status</h2>
+<p>Lihat status server secara realtime.</p>
 
-<h2>2.5M+</h2>
-
-<p>Request</p>
-
-</div>
-
-</section>
-
-<section class="category">
-
-<h2>
-
-API Categories
-
-</h2>
-
-<div class="grid">
-
-<a href="/docs#ai" class="box">
-
-🤖
-
-<span>AI</span>
-
-</a>
-
-<a href="/docs#downloader" class="box">
-
-⬇️
-
-<span>Downloader</span>
-
-</a>
-
-<a href="/docs#maker" class="box">
-
-🎨
-
-<span>Maker</span>
-
-</a>
-
-<a href="/docs#search" class="box">
-
-🔎
-
-<span>Search</span>
-
-</a>
-
-<a href="/docs#tools" class="box">
-
-🛠
-
-<span>Tools</span>
-
-</a>
-
-<a href="/docs#image" class="box">
-
-🖼
-
-<span>Image</span>
-
-</a>
-
-<a href="/docs#game" class="box">
-
-🎮
-
-<span>Game</span>
-
-</a>
-
-<a href="/docs#convert" class="box">
-
-🔄
-
-<span>Convert</span>
-
+<a href="/status" class="btn">
+View Status
 </a>
 
 </div>
 
-</section>
+<div class="card">
+<h2>🚀 Endpoint</h2>
+<p>AI, Downloader, Maker, Search, Tools, dan lainnya.</p>
 
-<section class="example">
-
-<h2>
-
-Quick Example
-
-</h2>
-
-<div class="code">
-
-<code>
-
-GET /api/maker/brat?text=DIN STORE
-
-</code>
-
-<button id="copy">
-
-Copy
-
-</button>
+<a href="/api" class="btn">
+Browse API
+</a>
 
 </div>
 
-</section>
+</div>
 
 <footer>
 
 © 2026 DIN STORE API
 
 </footer>
-
-<script src="script.js"></script>
 
 </body>
 </html>
