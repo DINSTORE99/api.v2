@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>DIN STORE API Status</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Poppins,sans-serif;
+}
+
+body{
+
+background:#0b1020;
+color:#fff;
+
+}
+
+.bg{
+
+position:fixed;
+inset:0;
+background:
+radial-gradient(circle at top,#2563eb33,transparent 60%),
+radial-gradient(circle at bottom,#00e5ff22,transparent 60%);
+z-index:-1;
+
+}
+
+.container{
+
+max-width:1100px;
+margin:auto;
+padding:60px 20px;
+
+}
+
+.back{
+
+display:inline-block;
+margin-bottom:30px;
+padding:10px 20px;
+background:#111827;
+border-radius:10px;
+color:#fff;
+text-decoration:none;
+
+}
+
+h1{
+
+font-size:45px;
+margin-bottom:10px;
+
+}
+
+p{
+
+color:#94a3b8;
+margin-bottom:40px;
+
+}
+
+.grid{
+
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+gap:20px;
+
+}
+
+.card{
+
+background:#111827;
+border:1px solid #1f2937;
+padding:25px;
+border-radius:18px;
+transition:.3s;
+
+}
+
+.card:hover{
+
+transform:translateY(-5px);
+border-color:#2563eb;
+box-shadow:0 0 20px #2563eb55;
+
+}
+
+.card h2{
+
+font-size:35px;
+margin-bottom:8px;
+
+}
+
+.card span{
+
+color:#94a3b8;
+
+}
+
+.online{
+
+color:#22c55e;
+
+}
+
+footer{
+
+padding:40px;
+text-align:center;
+color:#777;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="bg"></div>
+
+<div class="container">
+
+<a href="/" class="back">
+
+← Home
+
+</a>
+
+<h1>
+
+📡 API Status
+
+</h1>
+
+<p>
+
+Realtime monitoring DIN STORE API
+
+</p>
+
+<div class="grid">
+
+<div class="card">
+
+<h2 class="online">
+
+🟢 ONLINE
+
+</h2>
+
+<span>Server Status</
