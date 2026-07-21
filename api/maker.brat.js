@@ -5,18 +5,18 @@ export default async function handler(req, res) {
     if (!text) {
       return res.status(400).json({
         status: false,
-        message: "Parameter 'text' wajib diisi"
+        message: "Parameter text wajib diisi"
       });
     }
 
-    const response = await fetch(
-      `https://api.siputzx.my.id/api/m/brat?text=${encodeURIComponent(text)}&delay=${delay}`
-    );
+    const api = `https://api.siputzx.my.id/api/m/brat?text=${encodeURIComponent(text)}&delay=${delay}`;
+
+    const response = await fetch(api);
 
     if (!response.ok) {
       return res.status(response.status).json({
         status: false,
-        message: "Gagal mengambil data dari server"
+        message: "Gagal mengambil data"
       });
     }
 
@@ -29,10 +29,10 @@ export default async function handler(req, res) {
 
     return res.status(200).send(buffer);
 
-  } catch (err) {
+  } catch (e) {
     return res.status(500).json({
       status: false,
-      message: err.message
+      message: e.message
     });
   }
 }
