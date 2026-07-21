@@ -1,8 +1,5 @@
-const BASE_URL = "/api/siput";
+ENDPOINTS.forEach(api => {
 
-function generateBrat() {
-    const text = document.getElementById("text").value;
+// otomatis bikin card
 
-    document.getElementById("result").innerHTML =
-        `<img src="${BASE_URL}/m/brat?text=${encodeURIComponent(text)}">`;
-}
+});
