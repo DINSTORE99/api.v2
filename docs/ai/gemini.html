@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Gemini API - DIN STORE API</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Poppins,sans-serif;
+}
+
+body{
+background:#0b1020;
+color:#fff;
+}
+
+.bg{
+position:fixed;
+inset:0;
+background:
+radial-gradient(circle at top,#2563eb33,transparent 60%),
+radial-gradient(circle at bottom,#00e5ff22,transparent 60%);
+z-index:-1;
+}
+
+.container{
+max-width:1000px;
+margin:auto;
+padding:40px 20px;
+}
+
+.back{
+display:inline-block;
+margin-bottom:30px;
+padding:10px 18px;
+background:#1f2937;
+border-radius:10px;
+color:white;
+text-decoration:none;
+}
+
+.title{
+
+font-size:42px;
+margin-bottom:10px;
+
+}
+
+.desc{
+
+color:#94a3b8;
+margin-bottom:35px;
+
+}
+
+.card{
+
+background:#111827;
+border:1px solid #1f2937;
+border-radius:15px;
+padding:25px;
+margin-bottom:20px;
+
+}
+
+.card h2{
+
+margin-bottom:15px;
+
+}
+
+.method{
+
+display:inline-block;
+background:#16a34a;
+padding:8px 15px;
+border-radius:8px;
+font-weight:bold;
+
+}
+
+.endpoint{
+
+margin-top:20px;
+background:#0f172a;
+padding:15px;
+border-radius:10px;
+font-family:monospace;
+font-size:15px;
+
+}
+
+table{
+
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+
+}
+
+th,td{
+
+padding:12px;
+border-bottom:1px solid #1f2937;
+text-align:left;
+
+}
+
+.code{
+
+background:#0f172a;
+padding:18px;
+border-radius:10px;
+font-family:monospace;
+margin-top:15px;
+overflow:auto;
+
+}
+
+.button{
+
+display:inline-block;
+margin-top:20px;
+padding:12px 20px;
+background:#2563eb;
+color:white;
+border-radius:10px;
+text-decoration:none;
+margin-right:10px;
+
+}
+
+.copy{
+
+cursor:pointer;
+
+}
+
+footer{
+
+padding:40px;
+text-align:center;
+color:#777;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="bg"></div>
+
+<div class="container">
+
+<a href="/docs/ai.html" class="back">
+
+← Kembali
+
+</a>
+
+<h1 class="title">
+
+🤖 Gemini API
+
+</h1>
+
+<p class="desc">
+
+Google Gemini AI Chat Endpoint
+
+</p>
+
+<div class="card">
+
+<h2>Method</h2>
+
+<span class="method">
+
+GET
+
+</span>
+
+</div>
+
+<div class="card">
+
+<h2>Endpoint</h2>
+
+<div class="endpoint" id="endpoint">
+
+/api/ai/gemini
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Parameters</h2>
+
+<table>
+
+<tr>
+
+<th>Nama</th>
+
+<th>Tipe</th>
+
+<th>Wajib</th>
+
+<th>Keterangan</th>
+
+</tr>
+
+<tr>
+
+<td>query</td>
+
+<td>string</td>
+
+<td>✅</td>
+
+<td>Pertanyaan untuk AI</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<div class="card">
+
+<h2>Example Request</h2>
+
+<div class="code">
+
+GET
+
+/api/ai/gemini?query=Halo
+
+</div>
+
+<button class="button copy" onclick="copyEndpoint()">
+
+📋 Copy URL
+
+</button>
+
+<a
+
+class="button"
+
+href="/playground?endpoint=/api/ai/gemini"
+
+>
+
+⚡ Try API
+
+</a>
+
+</div>
+
+<div class="card">
+
+<h2>Example Response</h2>
+
+<div class="code">
+
+{
+
+"status":true,
+
+"creator":"DIN STORE",
+
+"data":{
+
+"response":"Halo, ada yang bisa saya bantu?"
+
+}
+
+}
+
+</div>
+
+</div>
+
+</div>
+
+<footer>
+
+© 2026 DIN STORE API
+
+</footer>
+
+<script>
+
+function copyEndpoint(){
+
+navigator.clipboard.writeText(
+
+location.origin +
+
+"/api/ai/gemini"
+
+);
+
+alert("Endpoint berhasil disalin!");
+
+}
+
+</script>
+
+</body>
+</html>
