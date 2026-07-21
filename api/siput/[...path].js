@@ -1,48 +1,84 @@
-const HOST = "https://api.siputzx.my.id";
+export const config = {
+  runtime: "nodejs"
+};
+
+const BASE_API = "https://api.siputzx.my.id/api";
 
 export default async function handler(req, res) {
   try {
+
     const { path = [], ...query } = req.query;
 
     const endpoint = Array.isArray(path)
       ? path.join("/")
       : path;
 
-    const qs = new URLSearchParams(query).toString();
+    const search = new URLSearchParams(query).toString();
 
-    const target = `${HOST}/api/${endpoint}${qs ? "?" + qs : ""}`;
+    const url =
+      `${BASE_API}/${endpoint}${search ? "?" + search : ""}`;
 
-    const response = await fetch(target, {
+    const response = await fetch(url, {
       method: req.method,
       headers: {
         "User-Agent": "DIN STORE API"
       }
     });
 
-    const type = response.headers.get("content-type") || "";
+    const contentType =
+      response.headers.get("content-type") ||
+      "application/octet-stream";
 
     res.status(response.status);
 
-    if (type) {
-      res.setHeader("Content-Type", type);
-    }
+    res.setHeader("Content-Type", contentType);
 
+    // Copy header penting
+    const headers = [
+      "content-disposition",
+      "cache-control"
+    ];
+
+    headers.forEach(h => {
+      const value = response.headers.get(h);
+      if (value) res.setHeader(h, value);
+    });
+
+    // Gambar / Video / Audio
     if (
-      type.startsWith("image/") ||
-      type.startsWith("video/") ||
-      type.startsWith("audio/")
+      contentType.startsWith("image/") ||
+      contentType.startsWith("video/") ||
+      contentType.startsWith("audio/")
     ) {
-      const buffer = Buffer.from(await response.arrayBuffer());
+
+      const buffer = Buffer.from(
+        await response.arrayBuffer()
+      );
+
       return res.send(buffer);
+
     }
 
+    // JSON
+    if (contentType.includes("application/json")) {
+
+      const json = await response.json();
+
+      return res.json(json);
+
+    }
+
+    // Selain JSON
     const text = await response.text();
+
     return res.send(text);
 
-  } catch (e) {
+  } catch (err) {
+
     return res.status(500).json({
       status: false,
-      message: e.message
+      message: err.message
     });
+
   }
 }
