@@ -1,35 +1,32 @@
-const BASE_API = "https://api.siputzx.my.id/api";
+const HOST = "https://api.siputzx.my.id";
 
 export default async function handler(req, res) {
   try {
     const { path = [], ...query } = req.query;
 
-    // Gabungkan path, contoh: m/brat
     const endpoint = Array.isArray(path)
       ? path.join("/")
       : path;
 
-    // Query string
-    const params = new URLSearchParams(query);
+    const qs = new URLSearchParams(query).toString();
 
-    // URL tujuan
-    const url = `${BASE_API}/${endpoint}?${params.toString()}`;
+    const target = `${HOST}/api/${endpoint}${qs ? "?" + qs : ""}`;
 
-    const response = await fetch(url, {
+    const response = await fetch(target, {
       method: req.method,
       headers: {
         "User-Agent": "DIN STORE API"
       }
     });
 
-    // Salin status
+    const type = response.headers.get("content-type") || "";
+
     res.status(response.status);
 
-    // Salin content-type
-    const type = response.headers.get("content-type") || "";
-    res.setHeader("Content-Type", type);
+    if (type) {
+      res.setHeader("Content-Type", type);
+    }
 
-    // Jika gambar/video/audio
     if (
       type.startsWith("image/") ||
       type.startsWith("video/") ||
@@ -39,22 +36,13 @@ export default async function handler(req, res) {
       return res.send(buffer);
     }
 
-    // Jika JSON
-    if (type.includes("application/json")) {
-      const json = await response.json();
-      return res.json(json);
-    }
-
-    // Selain itu kirim text
     const text = await response.text();
     return res.send(text);
 
-  } catch (err) {
-
+  } catch (e) {
     return res.status(500).json({
       status: false,
-      message: err.message
+      message: e.message
     });
-
   }
 }
