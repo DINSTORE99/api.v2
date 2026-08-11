@@ -1,7 +1,7 @@
 {
   "name": "dinstore-api",
-  "version": "1.0.0",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,12 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vitejs/plugin-react": "^4.6.0",
     "axios": "^1.11.0",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "vite": "^7.1.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.7.0",
-    "vite": "^7.1.2"
-  }
+  "devDependencies": {}
 }
