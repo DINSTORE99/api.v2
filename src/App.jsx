@@ -1,252 +1,200 @@
-import { useState } from "react";
 import "./style.css";
 
-const API_BASE = "https://api-v2-wheat.vercel.app";
-
-export default function App() {
-  const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
-
-  async function testTikTok() {
-    if (!url.trim()) {
-      setError("Masukkan URL TikTok terlebih dahulu.");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    setResult(null);
-
-    try {
-      const endpoint =
-        `${API_BASE}/api/tiktok?url=` +
-        encodeURIComponent(url.trim());
-
-      const response = await fetch(endpoint);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "API mengalami kesalahan."
-        );
+const endpoints = [
+  {
+    category: "DOWNLOADER",
+    items: [
+      {
+        name: "TikTok Downloader",
+        method: "GET",
+        path: "/api/tiktok"
+      },
+      {
+        name: "TikTok Slide",
+        method: "GET",
+        path: "/api/tiktokslide"
+      },
+      {
+        name: "Instagram Downloader",
+        method: "GET",
+        path: "/api/instagram"
+      },
+      {
+        name: "All Downloader",
+        method: "GET",
+        path: "/api/allinone"
       }
-
-      setResult(data);
-    } catch (err) {
-      setError(err.message || "Gagal menghubungi API.");
-    } finally {
-      setLoading(false);
-    }
+    ]
+  },
+  {
+    category: "TOOLS",
+    items: [
+      {
+        name: "QRIS Generator",
+        method: "GET",
+        path: "/api/qrisgen"
+      }
+    ]
+  },
+  {
+    category: "SYSTEM",
+    items: [
+      {
+        name: "Health Check",
+        method: "GET",
+        path: "/api/health"
+      }
+    ]
   }
+];
 
-  function reset() {
-    setUrl("");
-    setResult(null);
-    setError("");
-  }
-
+function App() {
   return (
     <div className="app">
 
-      <header className="navbar">
+      <aside className="sidebar">
+
         <div className="brand">
-          <div className="brand-logo">D</div>
+          <div className="brand-logo">
+            D
+          </div>
 
           <div>
-            <h1>DIN API</h1>
-            <span>REST API PLATFORM</span>
+            <strong>DINSTORE</strong>
+            <span>API</span>
           </div>
         </div>
 
-        <div className="status">
-          <span className="status-dot"></span>
-          API ONLINE
+        <div className="server">
+          <span />
+          Server Online
         </div>
-      </header>
 
-      <main className="container">
+        {endpoints.map((group) => (
+          <div className="endpoint-group" key={group.category}>
+
+            <div className="category">
+              {group.category}
+            </div>
+
+            {group.items.map((item) => (
+              <button className="endpoint" key={item.path}>
+
+                <div>
+                  {item.name}
+                </div>
+
+                <small>
+                  {item.method}
+                </small>
+
+              </button>
+            ))}
+
+          </div>
+        ))}
+
+      </aside>
+
+
+      <main className="main">
+
+        <header className="header">
+
+          <div>
+            <small>DINSTORE API</small>
+
+            <h1>
+              API Documentation
+            </h1>
+          </div>
+
+          <div className="version">
+            v1.0.0
+          </div>
+
+        </header>
+
 
         <section className="hero">
+
           <div className="badge">
-            DIN API v1.0.0
+            REST API
           </div>
 
           <h2>
-            Test TikTok API
+            DINSTORE API
           </h2>
 
           <p>
-            Masukkan URL TikTok untuk mengambil informasi
-            video melalui DIN API.
+            API downloader dan tools untuk kebutuhan
+            aplikasi kamu.
           </p>
-        </section>
 
-        <section className="tester">
+          <div className="status-card">
 
-          <div className="section-header">
+            <span className="online-dot" />
+
             <div>
-              <span className="method">GET</span>
-              <strong>/api/tiktok</strong>
+              <strong>All Systems Operational</strong>
+              <small>API server is online</small>
             </div>
 
-            <span className="provider">
-              TikTok
-            </span>
-          </div>
-
-          <label>
-            TikTok URL
-          </label>
-
-          <div className="input-row">
-            <input
-              type="url"
-              placeholder="https://vt.tiktok.com/..."
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  testTikTok();
-                }
-              }}
-            />
-
-            <button
-              onClick={testTikTok}
-              disabled={loading}
-            >
-              {loading ? "Loading..." : "Test API"}
-            </button>
-          </div>
-
-          <div className="example">
-            Contoh:
-            <button
-              onClick={() =>
-                setUrl(
-                  "https://vt.tiktok.com/ZS4c5fT85/"
-                )
-              }
-            >
-              Gunakan URL contoh
-            </button>
           </div>
 
         </section>
 
-        {error && (
-          <section className="error-box">
-            <strong>Request gagal</strong>
-            <p>{error}</p>
-          </section>
-        )}
 
-        {result && (
-          <section className="result">
+        <section className="endpoint-list">
 
-            <div className="result-header">
-              <div>
-                <span className="eyebrow">
-                  RESPONSE
-                </span>
+          <h3>
+            Available Endpoints
+          </h3>
 
-                <h3>
-                  API Response
-                </h3>
+          {endpoints.map((group) => (
+
+            <div
+              className="endpoint-card"
+              key={group.category}
+            >
+
+              <div className="card-category">
+                {group.category}
               </div>
 
-              <button
-                className="clear"
-                onClick={reset}
-              >
-                Clear
-              </button>
-            </div>
+              {group.items.map((item) => (
 
-            {result.result?.thumbnail && (
-              <div className="video-card">
+                <div
+                  className="row"
+                  key={item.path}
+                >
 
-                <img
-                  src={result.result.thumbnail}
-                  alt="TikTok thumbnail"
-                />
+                  <div className="row-name">
+                    {item.name}
+                  </div>
 
-                <div className="video-info">
+                  <span className="method">
+                    {item.method}
+                  </span>
 
-                  <h3>
-                    {result.result.title ||
-                      "TikTok Video"}
-                  </h3>
-
-                  <p>
-                    @{result.result.author || "Unknown"}
-                  </p>
-
-                  {result.result.duration && (
-                    <span>
-                      {result.result.duration}s
-                    </span>
-                  )}
+                  <code>
+                    {item.path}
+                  </code>
 
                 </div>
 
-              </div>
-            )}
+              ))}
 
-            {result.result?.links && (
-              <div className="downloads">
-
-                <h3>Download Links</h3>
-
-                {result.result.links.map(
-                  (link, index) => (
-                    <a
-                      key={index}
-                      href={link}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <span>
-                        {index === 0
-                          ? "HD Video"
-                          : index === 1
-                          ? "SD Video"
-                          : "Watermark"}
-                      </span>
-
-                      <span>↗</span>
-                    </a>
-                  )
-                )}
-
-              </div>
-            )}
-
-            <div className="json-title">
-              Raw JSON
             </div>
 
-            <pre>
-              {JSON.stringify(
-                result,
-                null,
-                2
-              )}
-            </pre>
+          ))}
 
-          </section>
-        )}
+        </section>
 
       </main>
-
-      <footer>
-        <span>DIN API</span>
-        <span>REST API</span>
-        <span>© 2026</span>
-      </footer>
 
     </div>
   );
 }
+
+export default App;
