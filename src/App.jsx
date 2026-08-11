@@ -1,130 +1,225 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./style.css";
 
 const API_BASE = "";
 
-export default function App() {
+function App() {
   const [docs, setDocs] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [openCategory, setOpenCategory] = useState(null);
-  const [openEndpoint, setOpenEndpoint] = useState(null);
+
+  const [openCategories, setOpenCategories] = useState({});
+  const [openEndpoints, setOpenEndpoints] = useState({});
   const [values, setValues] = useState({});
-  const [result, setResult] = useState({});
+  const [responses, setResponses] = useState({});
+  const [loadingTest, setLoadingTest] = useState({});
 
-  async function loadDocs() {
+  const loadDocs = async () => {
+    setLoading(true);
+    setError("");
+
     try {
-      setLoading(true);
-      setError("");
-
       const response = await fetch(`${API_BASE}/api/docs`, {
         headers: {
-          Accept: "application/json"
-        }
+          Accept: "application/json",
+        },
       });
 
-      const contentType = response.headers.get("content-type") || "";
+      const text = await response.text();
 
-      if (!contentType.includes("application/json")) {
-        const text = await response.text();
+      let data;
 
+      try {
+        data = JSON.parse(text);
+      } catch {
         throw new Error(
-          `Server tidak mengirim JSON. Response: ${text.slice(0, 100)}`
+          `Server tidak mengirim JSON. Response: ${text.slice(0, 300)}`
         );
       }
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "Gagal mengambil dokumentasi");
+      if (!response.ok) {
+        throw new Error(
+          data?.message || `Gagal mengambil dokumentasi (${response.status})`
+        );
       }
 
       setDocs(data);
+
+      if (Array.isArray(data.categories) && data.categories.length > 0) {
+        const firstCategory = data.categories[0];
+
+        setOpenCategories({
+          [firstCategory.name]: true,
+        });
+
+        if (firstCategory.endpoints?.length > 0) {
+          setOpenEndpoints({
+            [`${firstCategory.name}-${firstCategory.endpoints[0].name}`]: true,
+          });
+        }
+      }
     } catch (err) {
       console.error(err);
-      setError(err.message);
+      setError(err.message || "Gagal mengambil dokumentasi");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     loadDocs();
   }, []);
 
-  function updateValue(endpointIndex, parameter, value) {
+  const categories = useMemo(() => {
+    return Array.isArray(docs?.categories) ? docs.categories : [];
+  }, [docs]);
+
+  const totalEndpoints = useMemo(() => {
+    return categories.reduce(
+      (total, category) =>
+        total + (Array.isArray(category.endpoints) ? category.endpoints.length : 0),
+      0
+    );
+  }, [categories]);
+
+  const toggleCategory = (categoryName) => {
+    setOpenCategories((prev) => ({
+      ...prev,
+      [categoryName]: !prev[categoryName],
+    }));
+  };
+
+  const toggleEndpoint = (id) => {
+    setOpenEndpoints((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const updateValue = (endpointId, parameterName, value) => {
     setValues((prev) => ({
       ...prev,
-      [`${endpointIndex}_${parameter}`]: value
+      [endpointId]: {
+        ...(prev[endpointId] || {}),
+        [parameterName]: value,
+      },
     }));
-  }
+  };
 
-  async function executeEndpoint(endpoint, endpointIndex) {
+  const executeEndpoint = async (category, endpoint) => {
+    const endpointId = `${category.name}-${endpoint.name}`;
+    const params = endpoint.parameters || [];
+    const currentValues = values[endpointId] || {};
+
+    setLoadingTest((prev) => ({
+      ...prev,
+      [endpointId]: true,
+    }));
+
+    setResponses((prev) => ({
+      ...prev,
+      [endpointId]: null,
+    }));
+
     try {
-      const params = new URLSearchParams();
+      let requestUrl = endpoint.path || endpoint.url || "";
+      let requestOptions = {
+        method: (endpoint.method || "GET").toUpperCase(),
+        headers: {
+          Accept: "application/json",
+        },
+      };
 
-      for (const parameter of endpoint.parameters || []) {
-        const key = `${endpointIndex}_${parameter.name}`;
-        const value = values[key];
+      const method = requestOptions.method;
 
-        if (parameter.required && !value) {
-          alert(`${parameter.name} wajib diisi`);
-          return;
+      const filledParams = {};
+
+      params.forEach((parameter) => {
+        const value = currentValues[parameter.name];
+
+        if (value !== undefined && value !== "") {
+          filledParams[parameter.name] = value;
         }
+      });
 
-        if (value) {
-          params.set(parameter.name, value);
+      if (method === "GET" || method === "DELETE") {
+        const query = new URLSearchParams();
+
+        Object.entries(filledParams).forEach(([key, value]) => {
+          query.set(key, value);
+        });
+
+        if (query.toString()) {
+          requestUrl +=
+            (requestUrl.includes("?") ? "&" : "?") + query.toString();
         }
+      } else {
+        requestOptions.headers["Content-Type"] = "application/json";
+        requestOptions.body = JSON.stringify(filledParams);
       }
 
-      const url = `${endpoint.path}?${params.toString()}`;
+      const response = await fetch(`${API_BASE}${requestUrl}`, requestOptions);
 
-      setResult((prev) => ({
-        ...prev,
-        [endpointIndex]: {
-          loading: true
-        }
-      }));
-
-      const response = await fetch(url);
-
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      let data;
+      const contentType = response.headers.get("content-type") || "";
 
       if (contentType.includes("application/json")) {
-        data = await response.json();
-      } else {
-        data = await response.text();
-      }
+        const data = await response.json();
 
-      setResult((prev) => ({
-        ...prev,
-        [endpointIndex]: {
-          loading: false,
-          status: response.status,
-          data
-        }
-      }));
+        setResponses((prev) => ({
+          ...prev,
+          [endpointId]: {
+            ok: response.ok,
+            status: response.status,
+            data,
+            url: `${API_BASE}${requestUrl}`,
+          },
+        }));
+      } else {
+        const text = await response.text();
+
+        setResponses((prev) => ({
+          ...prev,
+          [endpointId]: {
+            ok: response.ok,
+            status: response.status,
+            data: text,
+            url: `${API_BASE}${requestUrl}`,
+          },
+        }));
+      }
     } catch (error) {
-      setResult((prev) => ({
+      setResponses((prev) => ({
         ...prev,
-        [endpointIndex]: {
-          loading: false,
-          error: error.message
-        }
+        [endpointId]: {
+          ok: false,
+          status: 500,
+          error: error.message,
+        },
+      }));
+    } finally {
+      setLoadingTest((prev) => ({
+        ...prev,
+        [endpointId]: false,
       }));
     }
-  }
+  };
+
+  const copyText = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (error) {
+      console.error("Copy gagal:", error);
+    }
+  };
 
   if (loading) {
     return (
       <div className="page">
-        <div className="loading">
-          <div className="spinner" />
-          <h2>Mengambil dokumentasi...</h2>
-          <p>DINSTORE API</p>
+        <div className="loading-screen">
+          <div className="loading-logo">D</div>
+          <div className="loading-spinner"></div>
+          <h2>Memuat dokumentasi...</h2>
+          <p>Mengambil endpoint dari DINSTORE API</p>
         </div>
       </div>
     );
@@ -133,46 +228,54 @@ export default function App() {
   if (error) {
     return (
       <div className="page">
-        <div className="error-page">
+        <div className="error-screen">
           <div className="error-icon">!</div>
 
           <h1>Gagal mengambil dokumentasi</h1>
 
           <p>{error}</p>
 
-          <button onClick={loadDocs}>
+          <button className="primary-btn" onClick={loadDocs}>
             Coba Lagi
           </button>
+
+          <div className="error-help">
+            <strong>Endpoint dokumentasi:</strong>
+            <code>/api/docs</code>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="app">
+    <div className="page">
 
+      {/* HEADER */}
       <header className="topbar">
-
         <div className="brand">
-          <div className="brand-logo">
-            D
-          </div>
+          <div className="brand-logo">D</div>
 
           <div>
-            <strong>{docs.name}</strong>
-            <span>API Documentation</span>
+            <div className="brand-name">
+              {docs?.name || "DINSTORE API"}
+            </div>
+
+            <div className="brand-subtitle">
+              REST API Documentation
+            </div>
           </div>
         </div>
 
         <div className="version">
-          v{docs.version}
+          v{docs?.version || "1.0.0"}
         </div>
-
       </header>
 
+      {/* MAIN */}
+      <main className="container">
 
-      <main>
-
+        {/* HERO */}
         <section className="hero">
 
           <div className="eyebrow">
@@ -180,333 +283,432 @@ export default function App() {
           </div>
 
           <h1>
-            {docs.name}
+            {docs?.name || "DINSTORE API"}
           </h1>
 
           <p>
-            API downloader dan tools untuk kebutuhan
-            aplikasi kamu.
+            {docs?.description ||
+              "API downloader dan tools untuk kebutuhan aplikasi kamu."}
           </p>
 
-          <div className="status">
+          <div className="status-card">
 
-            <span className="status-dot" />
+            <div className="status-dot"></div>
 
             <div>
               <strong>All Systems Operational</strong>
-              <small>
-                Server berjalan normal
-              </small>
+              <span>Server berjalan normal</span>
             </div>
 
           </div>
 
         </section>
 
+        {/* INFO */}
+        <section className="info-grid">
 
-        <section className="docs">
+          <div className="info-card">
+            <span>CREATOR</span>
+            <strong>{docs?.creator || "DINSTORE"}</strong>
+          </div>
 
-          {(docs.categories || []).map(
-            (category, categoryIndex) => {
+          <div className="info-card">
+            <span>VERSION</span>
+            <strong>{docs?.version || "1.0.0"}</strong>
+          </div>
 
-              const categoryOpen =
-                openCategory === categoryIndex;
+          <div className="info-card">
+            <span>CATEGORIES</span>
+            <strong>{categories.length}</strong>
+          </div>
 
-              return (
-                <div
-                  className="category"
-                  key={categoryIndex}
+          <div className="info-card">
+            <span>ENDPOINTS</span>
+            <strong>{totalEndpoints}</strong>
+          </div>
+
+        </section>
+
+        {/* CATEGORIES */}
+        <section className="docs-section">
+
+          {categories.map((category) => {
+
+            const categoryOpen = !!openCategories[category.name];
+
+            const endpoints = Array.isArray(category.endpoints)
+              ? category.endpoints
+              : [];
+
+            return (
+              <div
+                className={`category ${
+                  categoryOpen ? "category-open" : ""
+                }`}
+                key={category.name}
+              >
+
+                {/* CATEGORY HEADER */}
+                <button
+                  className="category-header"
+                  onClick={() => toggleCategory(category.name)}
                 >
 
-                  <button
-                    className="category-header"
-                    onClick={() =>
-                      setOpenCategory(
-                        categoryOpen
-                          ? null
-                          : categoryIndex
-                      )
-                    }
-                  >
+                  <div className="category-left">
 
-                    <div className="category-title">
-
-                      <span className="category-icon">
-                        {category.icon === "tools"
-                          ? "⚙"
-                          : "↓"}
-                      </span>
-
-                      <strong>
-                        {category.name}
-                      </strong>
-
+                    <div className="category-icon">
+                      {category.icon === "download"
+                        ? "↓"
+                        : category.icon === "tools"
+                        ? "⚙"
+                        : "◈"}
                     </div>
 
-                    <div className="category-count">
-                      {category.endpoints?.length || 0}
+                    <div>
+                      <h2>{category.name}</h2>
                       <span>
-                        {categoryOpen ? "⌃" : "⌄"}
+                        {endpoints.length} endpoint
+                        {endpoints.length !== 1 ? "s" : ""}
                       </span>
                     </div>
 
-                  </button>
+                  </div>
 
+                  <div className="category-arrow">
+                    {categoryOpen ? "⌃" : "⌄"}
+                  </div>
 
-                  {categoryOpen && (
+                </button>
 
-                    <div className="endpoint-list">
+                {/* ENDPOINTS */}
+                {categoryOpen && (
+                  <div className="endpoint-list">
 
-                      {(category.endpoints || []).map(
-                        (endpoint, endpointIndex) => {
+                    {endpoints.map((endpoint, index) => {
 
-                          const id =
-                            `${categoryIndex}_${endpointIndex}`;
+                      const endpointId =
+                        `${category.name}-${endpoint.name}`;
 
-                          const isOpen =
-                            openEndpoint === id;
+                      const endpointOpen =
+                        !!openEndpoints[endpointId];
 
-                          const endpointResult =
-                            result[id];
+                      const method =
+                        (endpoint.method || "GET").toUpperCase();
 
-                          return (
+                      const parameters =
+                        Array.isArray(endpoint.parameters)
+                          ? endpoint.parameters
+                          : [];
 
-                            <article
-                              className="endpoint"
-                              key={id}
-                            >
+                      const example =
+                        endpoint.example ||
+                        `${endpoint.path || ""}`;
 
-                              <div
-                                className="endpoint-head"
-                                onClick={() =>
-                                  setOpenEndpoint(
-                                    isOpen ? null : id
-                                  )
-                                }
+                      return (
+                        <article
+                          className={`endpoint ${
+                            endpointOpen ? "endpoint-open" : ""
+                          }`}
+                          key={`${endpointId}-${index}`}
+                        >
+
+                          {/* ENDPOINT TOP */}
+                          <button
+                            className="endpoint-header"
+                            onClick={() =>
+                              toggleEndpoint(endpointId)
+                            }
+                          >
+
+                            <div className="endpoint-title">
+
+                              <div className={`method ${method.toLowerCase()}`}>
+                                {method}
+                              </div>
+
+                              <div>
+                                <h3>
+                                  {endpoint.name}
+                                </h3>
+
+                                <code>
+                                  {endpoint.path}
+                                </code>
+                              </div>
+
+                            </div>
+
+                            <div className="endpoint-actions">
+
+                              <button
+                                className="copy-btn"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  copyText(endpoint.path || "");
+                                }}
                               >
+                                Copy
+                              </button>
 
-                                <div>
+                              <span>
+                                {endpointOpen ? "⌃" : "⌄"}
+                              </span>
 
-                                  <div className="method-row">
+                            </div>
 
-                                    <span className="method">
-                                      {endpoint.method}
-                                    </span>
+                          </button>
+
+                          {endpointOpen && (
+                            <div className="endpoint-body">
+
+                              {/* DESCRIPTION */}
+                              {endpoint.description && (
+                                <p className="endpoint-description">
+                                  {endpoint.description}
+                                </p>
+                              )}
+
+                              {/* REQUEST */}
+                              <div className="request-box">
+
+                                <div className="box-label">
+                                  REQUEST
+                                </div>
+
+                                <div className="request-url">
+
+                                  <span className={`method-text ${method.toLowerCase()}`}>
+                                    {method}
+                                  </span>
+
+                                  <code>
+                                    {endpoint.path}
+                                  </code>
+
+                                </div>
+
+                                {/* PARAMETERS */}
+                                {parameters.length > 0 && (
+                                  <div className="parameters">
+
+                                    <div className="parameter-title">
+                                      Parameters
+                                    </div>
+
+                                    {parameters.map((parameter) => {
+
+                                      const current =
+                                        values[endpointId]?.[
+                                          parameter.name
+                                        ] || "";
+
+                                      return (
+                                        <div
+                                          className="parameter"
+                                          key={parameter.name}
+                                        >
+
+                                          <div className="parameter-head">
+
+                                            <div>
+                                              <strong>
+                                                {parameter.name}
+                                              </strong>
+
+                                              <span className="parameter-type">
+                                                {parameter.type || "string"}
+                                              </span>
+                                            </div>
+
+                                            <span
+                                              className={
+                                                parameter.required
+                                                  ? "required"
+                                                  : "optional"
+                                              }
+                                            >
+                                              {parameter.required
+                                                ? "REQ"
+                                                : "OPT"}
+                                            </span>
+
+                                          </div>
+
+                                          <input
+                                            value={current}
+                                            onChange={(e) =>
+                                              updateValue(
+                                                endpointId,
+                                                parameter.name,
+                                                e.target.value
+                                              )
+                                            }
+                                            placeholder={
+                                              parameter.description ||
+                                              `Masukkan ${parameter.name}`
+                                            }
+                                          />
+
+                                          {parameter.description && (
+                                            <p>
+                                              {parameter.description}
+                                            </p>
+                                          )}
+
+                                        </div>
+                                      );
+                                    })}
+
+                                  </div>
+                                )}
+
+                                {/* EXAMPLE */}
+                                {example && (
+                                  <div className="example-box">
+
+                                    <div className="example-head">
+                                      <span>EXAMPLE</span>
+
+                                      <button
+                                        onClick={() =>
+                                          copyText(example)
+                                        }
+                                      >
+                                        Copy
+                                      </button>
+                                    </div>
 
                                     <code>
-                                      {endpoint.path}
+                                      {example}
                                     </code>
 
                                   </div>
+                                )}
 
-                                  <h2>
-                                    {endpoint.name}
-                                  </h2>
-
-                                </div>
-
-                                <span className="arrow">
-                                  {isOpen ? "⌃" : "⌄"}
-                                </span>
+                                {/* EXECUTE */}
+                                <button
+                                  className="execute-btn"
+                                  disabled={
+                                    loadingTest[endpointId]
+                                  }
+                                  onClick={() =>
+                                    executeEndpoint(
+                                      category,
+                                      endpoint
+                                    )
+                                  }
+                                >
+                                  {loadingTest[endpointId]
+                                    ? "EXECUTING..."
+                                    : "EXECUTE"}
+                                </button>
 
                               </div>
 
+                              {/* RESPONSE */}
+                              {responses[endpointId] && (
+                                <div className="response-section">
 
-                              {isOpen && (
+                                  <div className="response-title">
 
-                                <div className="endpoint-body">
+                                    <span>
+                                      RESPONSE
+                                    </span>
 
-                                  <p className="description">
-                                    {endpoint.description}
-                                  </p>
-
-
-                                  <div className="request-box">
-
-                                    <div className="box-title">
-                                      REQUEST
-                                    </div>
-
-                                    <div className="request-url">
-
-                                      <span>
-                                        {endpoint.method}
-                                      </span>
-
-                                      <code>
-                                        {endpoint.path}
-                                      </code>
-
-                                    </div>
-
-                                    <div className="params">
-
-                                      {(endpoint.parameters || []).map(
-                                        (parameter) => {
-
-                                          const key =
-                                            `${id}_${parameter.name}`;
-
-                                          return (
-
-                                            <div
-                                              className="param"
-                                              key={parameter.name}
-                                            >
-
-                                              <div className="param-label">
-
-                                                <strong>
-                                                  {parameter.name}
-                                                </strong>
-
-                                                <span>
-                                                  {parameter.type}
-                                                </span>
-
-                                                {parameter.required && (
-                                                  <em>
-                                                    REQ
-                                                  </em>
-                                                )}
-
-                                              </div>
-
-                                              <p>
-                                                {parameter.description}
-                                              </p>
-
-                                              <input
-                                                type={
-                                                  parameter.type ===
-                                                  "number"
-                                                    ? "number"
-                                                    : "text"
-                                                }
-                                                placeholder={
-                                                  parameter.name ===
-                                                  "url"
-                                                    ? "Masukkan URL..."
-                                                    : `Masukkan ${parameter.name}...`
-                                                }
-                                                value={
-                                                  values[key] || ""
-                                                }
-                                                onChange={(e) =>
-                                                  updateValue(
-                                                    id,
-                                                    parameter.name,
-                                                    e.target.value
-                                                  )
-                                                }
-                                              />
-
-                                            </div>
-
-                                          );
-                                        }
-                                      )}
-
-                                    </div>
-
-
-                                    <button
-                                      className="execute"
-                                      onClick={() =>
-                                        executeEndpoint(
-                                          endpoint,
-                                          id
-                                        )
+                                    <strong
+                                      className={
+                                        responses[endpointId].ok
+                                          ? "success"
+                                          : "failed"
                                       }
                                     >
-                                      {endpointResult?.loading
-                                        ? "EXECUTING..."
-                                        : "EXECUTE"}
-                                    </button>
+                                      HTTP{" "}
+                                      {responses[endpointId].status}
+                                    </strong>
 
                                   </div>
 
-
-                                  {endpoint.example && (
-
-                                    <div className="example">
-
-                                      <div className="example-title">
-                                        EXAMPLE
-                                      </div>
-
-                                      <code>
-                                        {endpoint.example}
-                                      </code>
-
+                                  {responses[endpointId].url && (
+                                    <div className="response-url">
+                                      {responses[endpointId].url}
                                     </div>
-
                                   )}
 
-
-                                  {endpointResult && (
-
-                                    <div className="response">
-
-                                      <div className="response-head">
-
-                                        <strong>
-                                          RESPONSE
-                                        </strong>
-
-                                        {endpointResult.status && (
-                                          <span>
-                                            HTTP{" "}
-                                            {endpointResult.status}
-                                          </span>
+                                  <pre>
+                                    {responses[endpointId].error
+                                      ? responses[endpointId].error
+                                      : typeof responses[
+                                          endpointId
+                                        ].data === "string"
+                                      ? responses[
+                                          endpointId
+                                        ].data
+                                      : JSON.stringify(
+                                          responses[
+                                            endpointId
+                                          ].data,
+                                          null,
+                                          2
                                         )}
-
-                                      </div>
-
-                                      <pre>
-                                        {endpointResult.error
-                                          ? endpointResult.error
-                                          : typeof endpointResult.data ===
-                                            "string"
-                                          ? endpointResult.data
-                                          : JSON.stringify(
-                                              endpointResult.data,
-                                              null,
-                                              2
-                                            )}
-                                      </pre>
-
-                                    </div>
-
-                                  )}
+                                  </pre>
 
                                 </div>
-
                               )}
 
-                            </article>
+                              {/* STATIC RESPONSE */}
+                              {endpoint.response && (
+                                <div className="response-section">
 
-                          );
-                        }
-                      )}
+                                  <div className="response-title">
+                                    <span>
+                                      EXAMPLE RESPONSE
+                                    </span>
+                                  </div>
 
-                    </div>
+                                  <pre>
+                                    {typeof endpoint.response ===
+                                    "string"
+                                      ? endpoint.response
+                                      : JSON.stringify(
+                                          endpoint.response,
+                                          null,
+                                          2
+                                        )}
+                                  </pre>
 
-                  )}
+                                </div>
+                              )}
 
-                </div>
-              );
-            }
-          )}
+                            </div>
+                          )}
+
+                        </article>
+                      );
+                    })}
+
+                  </div>
+                )}
+
+              </div>
+            );
+          })}
 
         </section>
 
       </main>
 
-      <footer>
-        © {new Date().getFullYear()} {docs.creator}
+      {/* FOOTER */}
+      <footer className="footer">
+        <span>
+          © {new Date().getFullYear()}{" "}
+          {docs?.creator || "DINSTORE"}
+        </span>
+
+        <span>REST API</span>
       </footer>
 
     </div>
   );
 }
+
+export default App;
