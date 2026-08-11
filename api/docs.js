@@ -1,7 +1,5 @@
-// api/docs.js
-
 export default function handler(req, res) {
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     creator: "DINSTORE",
     name: "DINSTORE API",
@@ -11,20 +9,25 @@ export default function handler(req, res) {
       {
         name: "Downloader",
         icon: "download",
+
         endpoints: [
           {
             name: "TikTok Downloader",
             method: "GET",
             path: "/api/tiktok",
-            description: "Download video TikTok.",
+
+            description:
+              "Download video TikTok tanpa watermark.",
+
             parameters: [
               {
                 name: "url",
                 type: "string",
                 required: true,
-                description: "URL video TikTok"
+                description: "URL TikTok"
               }
             ],
+
             example:
               "/api/tiktok?url=https://vt.tiktok.com/ZS4c5fT85/"
           },
@@ -33,7 +36,10 @@ export default function handler(req, res) {
             name: "Instagram Downloader",
             method: "GET",
             path: "/api/instagram",
-            description: "Download video atau media Instagram.",
+
+            description:
+              "Download video Instagram.",
+
             parameters: [
               {
                 name: "url",
@@ -42,6 +48,7 @@ export default function handler(req, res) {
                 description: "URL Instagram"
               }
             ],
+
             example:
               "/api/instagram?url=https://www.instagram.com/reel/..."
           }
@@ -51,12 +58,16 @@ export default function handler(req, res) {
       {
         name: "Tools",
         icon: "tools",
+
         endpoints: [
           {
             name: "QRIS Generator",
             method: "GET",
             path: "/api/qrisgen",
-            description: "Generate QRIS berdasarkan nominal.",
+
+            description:
+              "Generate QRIS berdasarkan nominal.",
+
             parameters: [
               {
                 name: "url",
@@ -68,9 +79,10 @@ export default function handler(req, res) {
                 name: "nominal",
                 type: "number",
                 required: true,
-                description: "Nominal pembayaran"
+                description: "Nominal"
               }
             ],
+
             example:
               "/api/qrisgen?url=https://example.com/qris.jpg&nominal=10000"
           }
