@@ -1,7 +1,9 @@
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({
-      success: false,
+      creator: "DINSTORE",
+      source: "TikTok — DINSTORE",
+      status: false,
       message: "Method not allowed"
     });
   }
@@ -10,7 +12,9 @@ export default async function handler(req, res) {
 
   if (!url) {
     return res.status(400).json({
-      success: false,
+      creator: "DINSTORE",
+      source: "TikTok — DINSTORE",
+      status: false,
       message: "Parameter url wajib diisi"
     });
   }
@@ -32,18 +36,24 @@ export default async function handler(req, res) {
       data = JSON.parse(text);
     } catch {
       data = {
-        success: response.ok,
         data: text
       };
     }
 
-    return res.status(response.status).json(data);
+    return res.status(response.status).json({
+      creator: "DINSTORE",
+      source: "TikTok — DINSTORE",
+      status: response.ok,
+      result: data.result || data
+    });
 
   } catch (error) {
     console.error(error);
 
     return res.status(500).json({
-      success: false,
+      creator: "DINSTORE",
+      source: "TikTok — DINSTORE",
+      status: false,
       message: "Gagal menghubungi provider"
     });
   }
