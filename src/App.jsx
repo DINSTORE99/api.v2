@@ -1,287 +1,370 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./style.css";
 
-const API_BASE = "https://api-v2-wheat.vercel.app";
-
-const ENDPOINTS = [
-  {
-    category: "DOWNLOAD",
-    icon: "⬇",
-    title: "TikTok Downloader",
-    path: "/api/tiktok",
-    description: "Download video TikTok dan mendapatkan informasi video.",
-    params: [
-      {
-        name: "url",
-        label: "URL",
-        required: true,
-        type: "text",
-        placeholder: "https://vt.tiktok.com/ZS4c5fT85/",
-        example: "https://vt.tiktok.com/ZS4c5fT85/",
-        description: "URL video TikTok."
-      }
-    ]
-  },
-
-  {
-    category: "DOWNLOAD",
-    icon: "◎",
-    title: "Instagram Downloader",
-    path: "/api/instagram",
-    description: "Download video Instagram Reels dan mendapatkan informasi media.",
-    params: [
-      {
-        name: "url",
-        label: "URL",
-        required: true,
-        type: "text",
-        placeholder: "https://www.instagram.com/reel/...",
-        example:
-          "https://www.instagram.com/reel/Db5Z25ThjwH/",
-        description: "URL Instagram Reel."
-      },
-      {
-        name: "format",
-        label: "FORMAT",
-        required: false,
-        type: "text",
-        placeholder: "mp4",
-        example: "mp4",
-        description: "Format media. Default: mp4."
-      }
-    ]
-  },
-
-  {
-    category: "DOWNLOAD",
-    icon: "▣",
-    title: "All Downloader",
-    path: "/api/download/allinonev2",
-    description: "Downloader all-in-one untuk berbagai media.",
-    params: [
-      {
-        name: "url",
-        label: "URL",
-        required: true,
-        type: "text",
-        placeholder: "Masukkan URL media...",
-        example:
-          "https://www.instagram.com/reel/Db5Z25ThjwH/",
-        description: "URL media yang ingin diproses."
-      },
-      {
-        name: "format",
-        label: "FORMAT",
-        required: false,
-        type: "text",
-        placeholder: "mp4",
-        example: "mp4",
-        description: "Format output. Contoh: mp4 atau mp3."
-      }
-    ]
-  },
-
-  {
-    category: "TOOLS",
-    icon: "▦",
-    title: "QRIS Generator",
-    path: "/api/qrisgen",
-    description: "Generate QRIS dinamis berdasarkan nominal.",
-    params: [
-      {
-        name: "url",
-        label: "QRIS URL",
-        required: true,
-        type: "text",
-        placeholder: "https://...",
-        example:
-          "https://i.ibb.co.com/bS14m00/qr-ID1025391659253-16-10-25-176062985-1760629853524.jpg",
-        description: "URL QRIS statis."
-      },
-      {
-        name: "nominal",
-        label: "NOMINAL",
-        required: true,
-        type: "number",
-        placeholder: "10000",
-        example: "10000",
-        description: "Nominal pembayaran."
-      }
-    ]
-  }
-];
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  "https://api-v2-wheat.vercel.app";
 
 function App() {
-  const [openCategory, setOpenCategory] = useState("DOWNLOAD");
-  const [openEndpoint, setOpenEndpoint] = useState("/api/tiktok");
+  const [docs, setDocs] = useState([]);
+  const [loadingDocs, setLoadingDocs] = useState(true);
+  const [docsError, setDocsError] = useState("");
 
-  const [values, setValues] = useState({});
-  const [responses, setResponses] = useState({});
-  const [loading, setLoading] = useState({});
-  const [copied, setCopied] = useState("");
+  const [search, setSearch] = useState("");
+  const [activeGroup, setActiveGroup] = useState("ALL");
+  const [activeEndpoint, setActiveEndpoint] = useState(null);
 
-  const categories = [
-    ...new Set(ENDPOINTS.map((item) => item.category))
-  ];
+  const [params, setParams] = useState({});
+  const [response, setResponse] = useState(null);
+  const [requestUrl, setRequestUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const updateValue = (path, name, value) => {
-    setValues((prev) => ({
-      ...prev,
-      [path]: {
-        ...(prev[path] || {}),
-        [name]: value
+  const [mobileMenu, setMobileMenu] = useState(false);
+
+  // =========================================================
+  // LOAD DOCUMENTATION DARI API
+  // =========================================================
+
+  useEffect(() => {
+    loadDocs();
+  }, []);
+
+  async function loadDocs() {
+    setLoadingDocs(true);
+    setDocsError("");
+
+    try {
+      const res = await fetch(`${API_BASE}/api/docs`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data?.message || `HTTP ${res.status}`
+        );
       }
-    }));
-  };
 
-  const loadExample = (endpoint) => {
-    const exampleValues = {};
+      const endpoints =
+        Array.isArray(data?.endpoints)
+          ? data.endpoints
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
 
-    endpoint.params.forEach((param) => {
-      if (param.example !== undefined) {
-        exampleValues[param.name] = param.example;
+      setDocs(endpoints);
+
+      if (endpoints.length > 0) {
+        selectEndpoint(endpoints[0]);
+      }
+    } catch (err) {
+      setDocsError(err.message);
+    } finally {
+      setLoadingDocs(false);
+    }
+  }
+
+  // =========================================================
+  // NORMALIZE DATA API
+  // =========================================================
+
+  function normalizeParameters(endpoint) {
+    if (!endpoint) return [];
+
+    if (Array.isArray(endpoint.parameters)) {
+      return endpoint.parameters;
+    }
+
+    if (Array.isArray(endpoint.params)) {
+      return endpoint.params;
+    }
+
+    return [];
+  }
+
+  function getEndpointName(endpoint) {
+    return (
+      endpoint?.name ||
+      endpoint?.title ||
+      endpoint?.label ||
+      endpoint?.path ||
+      "Unnamed Endpoint"
+    );
+  }
+
+  function getEndpointPath(endpoint) {
+    return endpoint?.path || endpoint?.endpoint || "/";
+  }
+
+  function getEndpointMethod(endpoint) {
+    return (
+      endpoint?.method ||
+      endpoint?.type ||
+      "GET"
+    ).toUpperCase();
+  }
+
+  function getEndpointDescription(endpoint) {
+    return (
+      endpoint?.description ||
+      endpoint?.desc ||
+      "API endpoint"
+    );
+  }
+
+  // =========================================================
+  // GROUPS
+  // =========================================================
+
+  const groups = useMemo(() => {
+    const result = ["ALL"];
+
+    docs.forEach((item) => {
+      const path = getEndpointPath(item);
+
+      const parts = path
+        .split("/")
+        .filter(Boolean);
+
+      if (parts.length > 1) {
+        const group = parts[1].toUpperCase();
+
+        if (!result.includes(group)) {
+          result.push(group);
+        }
       }
     });
 
-    setValues((prev) => ({
-      ...prev,
-      [endpoint.path]: exampleValues
-    }));
-  };
+    return result;
+  }, [docs]);
 
-  const executeEndpoint = async (endpoint) => {
-    const params = values[endpoint.path] || {};
+  // =========================================================
+  // FILTER
+  // =========================================================
 
-    for (const parameter of endpoint.params) {
-      if (parameter.required && !params[parameter.name]) {
-        setResponses((prev) => ({
-          ...prev,
-          [endpoint.path]: {
-            success: false,
-            message: `Parameter ${parameter.name} wajib diisi`
-          }
-        }));
-        return;
+  const filteredDocs = useMemo(() => {
+    return docs.filter((item) => {
+      const name = getEndpointName(item).toLowerCase();
+      const path = getEndpointPath(item).toLowerCase();
+      const description =
+        getEndpointDescription(item).toLowerCase();
+
+      const keyword = search.toLowerCase();
+
+      const matchSearch =
+        !keyword ||
+        name.includes(keyword) ||
+        path.includes(keyword) ||
+        description.includes(keyword);
+
+      let matchGroup = true;
+
+      if (activeGroup !== "ALL") {
+        const pathParts = getEndpointPath(item)
+          .split("/")
+          .filter(Boolean);
+
+        matchGroup =
+          pathParts[1]?.toUpperCase() === activeGroup;
       }
+
+      return matchSearch && matchGroup;
+    });
+  }, [docs, search, activeGroup]);
+
+  // =========================================================
+  // SELECT ENDPOINT
+  // =========================================================
+
+  function selectEndpoint(endpoint) {
+    setActiveEndpoint(endpoint);
+    setResponse(null);
+    setError("");
+    setRequestUrl("");
+
+    const initial = {};
+
+    normalizeParameters(endpoint).forEach((param) => {
+      initial[param.name] = param.default ?? "";
+    });
+
+    setParams(initial);
+  }
+
+  // =========================================================
+  // PARAMETER CHANGE
+  // =========================================================
+
+  function changeParam(name, value) {
+    setParams((old) => ({
+      ...old,
+      [name]: value,
+    }));
+  }
+
+  // =========================================================
+  // BUILD URL
+  // =========================================================
+
+  function buildUrl() {
+    if (!activeEndpoint) return "";
+
+    const path = getEndpointPath(activeEndpoint);
+
+    const url = new URL(
+      path,
+      API_BASE
+    );
+
+    const method = getEndpointMethod(activeEndpoint);
+
+    if (method === "GET") {
+      Object.entries(params).forEach(
+        ([key, value]) => {
+          if (
+            value !== undefined &&
+            value !== null &&
+            String(value).trim() !== ""
+          ) {
+            url.searchParams.set(
+              key,
+              value
+            );
+          }
+        }
+      );
     }
 
-    setLoading((prev) => ({
-      ...prev,
-      [endpoint.path]: true
-    }));
+    return url.toString();
+  }
 
-    setResponses((prev) => ({
-      ...prev,
-      [endpoint.path]: null
-    }));
+  // =========================================================
+  // EXECUTE API
+  // =========================================================
+
+  async function executeEndpoint() {
+    if (!activeEndpoint) return;
+
+    setLoading(true);
+    setError("");
+    setResponse(null);
 
     try {
-      const query = new URLSearchParams();
+      const method =
+        getEndpointMethod(activeEndpoint);
 
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== "") {
-          query.set(key, value);
-        }
-      });
+      const url = buildUrl();
 
-      const requestUrl = `${API_BASE}${endpoint.path}?${query.toString()}`;
+      setRequestUrl(url);
 
-      const response = await fetch(requestUrl);
+      const options = {
+        method,
+        headers: {
+          Accept: "application/json",
+        },
+      };
+
+      if (
+        method !== "GET" &&
+        method !== "HEAD"
+      ) {
+        options.headers[
+          "Content-Type"
+        ] = "application/json";
+
+        options.body = JSON.stringify(params);
+      }
+
+      const res = await fetch(
+        url,
+        options
+      );
 
       const contentType =
-        response.headers.get("content-type") || "";
+        res.headers.get(
+          "content-type"
+        ) || "";
 
       let data;
 
-      if (contentType.includes("application/json")) {
-        data = await response.json();
+      if (
+        contentType.includes(
+          "application/json"
+        )
+      ) {
+        data = await res.json();
       } else {
-        const text = await response.text();
-
-        try {
-          data = JSON.parse(text);
-        } catch {
-          data = {
-            success: response.ok,
-            status: response.status,
-            data: text
-          };
-        }
+        data = await res.text();
       }
 
-      setResponses((prev) => ({
-        ...prev,
-        [endpoint.path]: {
-          ...data,
-          _meta: {
-            status: response.status,
-            request: requestUrl
-          }
-        }
-      }));
-    } catch (error) {
-      setResponses((prev) => ({
-        ...prev,
-        [endpoint.path]: {
-          success: false,
-          message: "Gagal menghubungi API",
-          error: error.message
-        }
-      }));
+      setResponse({
+        status: res.status,
+        ok: res.ok,
+        data,
+      });
+    } catch (err) {
+      setError(
+        err.message ||
+          "Gagal menghubungi API"
+      );
     } finally {
-      setLoading((prev) => ({
-        ...prev,
-        [endpoint.path]: false
-      }));
+      setLoading(false);
     }
-  };
+  }
 
-  const copyText = async (text, id) => {
+  // =========================================================
+  // COPY
+  // =========================================================
+
+  async function copyText(text) {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(
+        text
+      );
+    } catch {}
+  }
 
-      setCopied(id);
+  // =========================================================
+  // FORMAT RESPONSE
+  // =========================================================
 
-      setTimeout(() => {
-        setCopied("");
-      }, 1500);
-    } catch {
-      console.log("Copy gagal");
+  function formatResponse(data) {
+    if (
+      typeof data === "string"
+    ) {
+      return data;
     }
-  };
 
-  const getRequestUrl = (endpoint) => {
-    const params = values[endpoint.path] || {};
-    const query = new URLSearchParams();
+    try {
+      return JSON.stringify(
+        data,
+        null,
+        2
+      );
+    } catch {
+      return String(data);
+    }
+  }
 
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== "") {
-        query.set(key, value);
-      }
-    });
-
-    return `${API_BASE}${endpoint.path}?${query.toString()}`;
-  };
-
-  const grouped = categories.map((category) => ({
-    category,
-    endpoints: ENDPOINTS.filter(
-      (endpoint) => endpoint.category === category
-    )
-  }));
+  // =========================================================
+  // UI
+  // =========================================================
 
   return (
     <div className="app">
 
-      {/* BACKGROUND */}
-      <div className="background-grid" />
-      <div className="glow glow-one" />
-      <div className="glow glow-two" />
+      {/* SIDEBAR */}
 
-      {/* HEADER */}
-      <header className="topbar">
+      <aside
+        className={`sidebar ${
+          mobileMenu
+            ? "sidebar-open"
+            : ""
+        }`}
+      >
         <div className="brand">
-          <div className="brand-logo">D</div>
+          <div className="brand-logo">
+            D
+          </div>
 
           <div>
             <div className="brand-name">
@@ -294,414 +377,559 @@ function App() {
           </div>
         </div>
 
-        <div className="server-status">
-          <span className="status-dot" />
-          <span>ONLINE</span>
+        <div className="sidebar-title">
+          ENDPOINTS
         </div>
-      </header>
 
-      {/* HERO */}
-      <main className="container">
+        <div className="group-list">
 
-        <section className="hero">
-          <div className="eyebrow">
-            REST API
+          {groups.map((group) => (
+            <button
+              key={group}
+              className={`group-btn ${
+                activeGroup === group
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() => {
+                setActiveGroup(group);
+                setMobileMenu(false);
+              }}
+            >
+              <span>
+                {group === "ALL"
+                  ? "All Endpoints"
+                  : group}
+              </span>
+
+              <span className="group-count">
+                {group === "ALL"
+                  ? docs.length
+                  : docs.filter(
+                      (x) =>
+                        getEndpointPath(
+                          x
+                        )
+                          .split("/")
+                          .filter(
+                            Boolean
+                          )[1]
+                          ?.toUpperCase() ===
+                        group
+                    ).length}
+              </span>
+            </button>
+          ))}
+
+        </div>
+
+        <div className="sidebar-bottom">
+          <div className="status-dot" />
+          <div>
+            <strong>
+              API ONLINE
+            </strong>
+
+            <small>
+              {API_BASE}
+            </small>
+          </div>
+        </div>
+      </aside>
+
+      {/* MAIN */}
+
+      <main className="main">
+
+        {/* HEADER */}
+
+        <header className="header">
+
+          <button
+            className="menu-btn"
+            onClick={() =>
+              setMobileMenu(
+                !mobileMenu
+              )
+            }
+          >
+            ☰
+          </button>
+
+          <div>
+            <div className="breadcrumb">
+              DINSTORE / API
+            </div>
+
+            <h1>
+              API Documentation
+            </h1>
           </div>
 
-          <h1>
-            DINSTORE <span>API</span>
-          </h1>
-
-          <p>
-            API downloader dan tools sederhana
-            untuk kebutuhan aplikasi kamu.
-          </p>
-
-          <div className="hero-status">
-            <span className="status-dot" />
-
-            <div>
-              <strong>All Systems Operational</strong>
-              <small>
-                Server berjalan normal
-              </small>
+          <div className="header-right">
+            <div className="online">
+              <span />
+              ONLINE
             </div>
           </div>
-        </section>
 
-        {/* API LIST */}
-        <section className="api-section">
+        </header>
 
-          {grouped.map((group) => {
-            const categoryOpen =
-              openCategory === group.category;
+        {/* CONTENT */}
 
-            return (
-              <div
-                className="category"
-                key={group.category}
+        <div className="content">
+
+          <section className="hero">
+
+            <div className="hero-badge">
+              REST API
+            </div>
+
+            <h2>
+              DINSTORE API
+            </h2>
+
+            <p>
+              API downloader dan tools
+              yang tersedia dari
+              server kamu.
+            </p>
+
+            <div className="server-card">
+
+              <div className="server-icon">
+                ●
+              </div>
+
+              <div>
+                <strong>
+                  All Systems Operational
+                </strong>
+
+                <span>
+                  Server berjalan normal
+                </span>
+              </div>
+
+            </div>
+
+          </section>
+
+          {/* SEARCH */}
+
+          <div className="toolbar">
+
+            <div className="search">
+              <span>⌕</span>
+
+              <input
+                value={search}
+                onChange={(e) =>
+                  setSearch(
+                    e.target.value
+                  )
+                }
+                placeholder="Cari endpoint..."
+              />
+            </div>
+
+            <button
+              className="refresh"
+              onClick={loadDocs}
+            >
+              ↻ Refresh
+            </button>
+
+          </div>
+
+          {/* ERROR DOCS */}
+
+          {docsError && (
+            <div className="error-box">
+              <strong>
+                Gagal mengambil dokumentasi
+              </strong>
+
+              <p>
+                {docsError}
+              </p>
+
+              <button
+                onClick={loadDocs}
               >
+                Coba Lagi
+              </button>
+            </div>
+          )}
 
-                {/* CATEGORY HEADER */}
-                <button
-                  className={`category-header ${
-                    categoryOpen ? "active" : ""
-                  }`}
-                  onClick={() =>
-                    setOpenCategory(
-                      categoryOpen ? "" : group.category
-                    )
-                  }
-                >
-                  <div className="category-left">
+          {/* LOADING */}
 
-                    <div className="category-icon">
-                      {group.endpoints[0]?.icon || "◆"}
-                    </div>
+          {loadingDocs && (
+            <div className="loading">
+              <div className="loader" />
+              Mengambil endpoint dari
+              API...
+            </div>
+          )}
 
-                    <div>
-                      <div className="category-name">
-                        {group.category}
+          {/* ENDPOINTS */}
+
+          {!loadingDocs &&
+            filteredDocs.map(
+              (endpoint, index) => {
+
+                const method =
+                  getEndpointMethod(
+                    endpoint
+                  );
+
+                const path =
+                  getEndpointPath(
+                    endpoint
+                  );
+
+                const parameters =
+                  normalizeParameters(
+                    endpoint
+                  );
+
+                const selected =
+                  activeEndpoint ===
+                  endpoint;
+
+                return (
+                  <section
+                    className={`endpoint-card ${
+                      selected
+                        ? "selected"
+                        : ""
+                    }`}
+                    key={
+                      endpoint.id ||
+                      path +
+                        index
+                    }
+                  >
+
+                    <div className="endpoint-head">
+
+                      <div>
+                        <div className="endpoint-label">
+                          ENDPOINT
+                        </div>
+
+                        <h3>
+                          {getEndpointName(
+                            endpoint
+                          )}
+                        </h3>
                       </div>
 
-                      <div className="category-count">
-                        {group.endpoints.length} ENDPOINT
-                        {group.endpoints.length > 1
-                          ? "S"
-                          : ""}
-                      </div>
+                      <span
+                        className={`method ${method.toLowerCase()}`}
+                      >
+                        {method}
+                      </span>
+
                     </div>
 
-                  </div>
+                    <div className="endpoint-body">
 
-                  <span className="arrow">
-                    {categoryOpen ? "⌃" : "⌄"}
-                  </span>
-                </button>
+                      <p className="description">
+                        {getEndpointDescription(
+                          endpoint
+                        )}
+                      </p>
 
-                {/* CATEGORY CONTENT */}
-                {categoryOpen && (
-                  <div className="category-content">
+                      {/* REQUEST */}
 
-                    {group.endpoints.map((endpoint) => {
-                      const isOpen =
-                        openEndpoint === endpoint.path;
+                      <div className="request-box">
 
-                      const response =
-                        responses[endpoint.path];
+                        <div className="box-title">
+                          REQUEST
+                        </div>
 
-                      const isLoading =
-                        loading[endpoint.path];
+                        <div className="request-line">
 
-                      return (
-                        <article
-                          className={`endpoint-card ${
-                            isOpen ? "expanded" : ""
-                          }`}
-                          key={endpoint.path}
-                        >
-
-                          {/* ENDPOINT TITLE */}
-                          <button
-                            className="endpoint-head"
-                            onClick={() =>
-                              setOpenEndpoint(
-                                isOpen
-                                  ? ""
-                                  : endpoint.path
-                              )
-                            }
+                          <span
+                            className={`method-text ${method.toLowerCase()}`}
                           >
+                            {method}
+                          </span>
 
-                            <div className="method">
-                              GET
-                            </div>
+                          <span>
+                            {path}
+                          </span>
 
-                            <div className="endpoint-info">
-                              <div className="endpoint-path">
-                                {endpoint.path}
-                              </div>
+                        </div>
 
-                              <div className="endpoint-title">
-                                {endpoint.title}
-                              </div>
-                            </div>
+                        <button
+                          className="try-btn"
+                          onClick={() =>
+                            selectEndpoint(
+                              endpoint
+                            )
+                          }
+                        >
+                          Try It →
+                        </button>
 
-                            <div className="head-actions">
+                      </div>
 
-                              <button
-                                className="copy-button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
+                      {/* PARAMETERS */}
 
-                                  copyText(
-                                    `${API_BASE}${endpoint.path}`,
-                                    `path-${endpoint.path}`
-                                  );
-                                }}
+                      {parameters.length >
+                        0 && (
+                        <div className="parameters">
+
+                          <h4>
+                            Parameters
+                          </h4>
+
+                          {parameters.map(
+                            (
+                              param
+                            ) => (
+                              <div
+                                className="param"
+                                key={
+                                  param.name
+                                }
                               >
-                                {copied ===
-                                `path-${endpoint.path}`
-                                  ? "✓"
-                                  : "▣"}
-                              </button>
 
-                              <span className="expand-button">
-                                {isOpen ? "⌃" : "⌄"}
-                              </span>
+                                <div className="param-info">
 
-                            </div>
+                                  <div className="param-top">
 
-                          </button>
-
-                          {/* CONTENT */}
-                          {isOpen && (
-                            <div className="endpoint-body">
-
-                              <p className="endpoint-description">
-                                {endpoint.description}
-                              </p>
-
-                              {/* REQUEST */}
-                              <div className="request-box">
-
-                                <div className="request-label">
-                                  REQUEST
-                                </div>
-
-                                <div className="request-url">
-                                  <span className="green">
-                                    GET
-                                  </span>
-
-                                  <span>
-                                    {endpoint.path}
-                                  </span>
-                                </div>
-
-                                <div className="request-preview">
-                                  {getRequestUrl(endpoint)}
-                                </div>
-
-                              </div>
-
-                              {/* PARAMETERS */}
-                              <div className="parameters-title">
-                                Parameters
-                              </div>
-
-                              <div className="parameters">
-
-                                {endpoint.params.map(
-                                  (parameter) => (
-                                    <div
-                                      className="parameter"
-                                      key={
-                                        parameter.name
+                                    <span className="param-name">
+                                      {
+                                        param.name
                                       }
-                                    >
+                                    </span>
 
-                                      <div className="parameter-top">
+                                    <span className="param-type">
+                                      {
+                                        param.type ||
+                                        "string"
+                                      }
+                                    </span>
 
-                                        <div className="parameter-name">
-                                          <span>
-                                            •{" "}
-                                            {
-                                              parameter.label
-                                            }
-                                          </span>
-
-                                          <span
-                                            className={
-                                              parameter.required
-                                                ? "req"
-                                                : "opt"
-                                            }
-                                          >
-                                            {parameter.required
-                                              ? "REQ"
-                                              : "OPT"}
-                                          </span>
-                                        </div>
-
-                                      </div>
-
-                                      <div className="input-wrapper">
-
-                                        <input
-                                          type={
-                                            parameter.type ||
-                                            "text"
-                                          }
-                                          value={
-                                            values[
-                                              endpoint.path
-                                            ]?.[
-                                              parameter
-                                                .name
-                                            ] || ""
-                                          }
-                                          onChange={(e) =>
-                                            updateValue(
-                                              endpoint.path,
-                                              parameter.name,
-                                              e.target
-                                                .value
-                                            )
-                                          }
-                                          placeholder={
-                                            parameter.placeholder
-                                          }
-                                        />
-
-                                        <span className="input-icon">
-                                          ↗
-                                        </span>
-
-                                      </div>
-
-                                      <div className="parameter-description">
-                                        {
-                                          parameter.description
-                                        }
-                                      </div>
-
-                                    </div>
-                                  )
-                                )}
-
-                              </div>
-
-                              {/* EXAMPLE */}
-                              <button
-                                className="example-button"
-                                onClick={() =>
-                                  loadExample(
-                                    endpoint
-                                  )
-                                }
-                              >
-                                💡 EXAMPLE
-                              </button>
-
-                              {/* EXECUTE */}
-                              <button
-                                className={`execute-button ${
-                                  isLoading
-                                    ? "loading"
-                                    : ""
-                                }`}
-                                onClick={() =>
-                                  executeEndpoint(
-                                    endpoint
-                                  )
-                                }
-                                disabled={isLoading}
-                              >
-                                {isLoading
-                                  ? "LOADING..."
-                                  : "EXECUTE"}
-                              </button>
-
-                              {/* RESPONSE */}
-                              {response && (
-                                <div className="response-section">
-
-                                  <div className="response-header">
-
-                                    <div>
-                                      <span>
-                                        RESPONSE
+                                    {param.required && (
+                                      <span className="required">
+                                        REQUIRED
                                       </span>
-
-                                      {response._meta && (
-                                        <small
-                                          className={
-                                            response
-                                              ._meta
-                                              .status >=
-                                            200 &&
-                                            response
-                                              ._meta
-                                              .status <
-                                              300
-                                              ? "success-code"
-                                              : "error-code"
-                                          }
-                                        >
-                                          HTTP{" "}
-                                          {
-                                            response
-                                              ._meta
-                                              .status
-                                          }
-                                        </small>
-                                      )}
-                                    </div>
-
-                                    <button
-                                      onClick={() =>
-                                        copyText(
-                                          JSON.stringify(
-                                            response,
-                                            null,
-                                            2
-                                          ),
-                                          `response-${endpoint.path}`
-                                        )
-                                      }
-                                    >
-                                      {copied ===
-                                      `response-${endpoint.path}`
-                                        ? "COPIED"
-                                        : "COPY"}
-                                    </button>
+                                    )}
 
                                   </div>
 
-                                  <pre className="json-response">
-                                    {JSON.stringify(
-                                      response,
-                                      null,
-                                      2
-                                    )}
-                                  </pre>
+                                  <span className="param-desc">
+                                    {
+                                      param.description ||
+                                      "Parameter API"
+                                    }
+                                  </span>
 
                                 </div>
-                              )}
 
+                              </div>
+                            )
+                          )}
+
+                        </div>
+                      )}
+
+                      {/* TRY FORM */}
+
+                      {selected && (
+                        <div className="try-panel">
+
+                          <div className="try-title">
+                            TEST ENDPOINT
+                          </div>
+
+                          {parameters.length ===
+                            0 && (
+                            <div className="no-param">
+                              Endpoint ini tidak
+                              membutuhkan parameter.
                             </div>
                           )}
 
-                        </article>
-                      );
-                    })}
+                          {parameters.map(
+                            (
+                              param
+                            ) => (
+                              <div
+                                className="input-group"
+                                key={
+                                  param.name
+                                }
+                              >
 
-                  </div>
-                )}
+                                <label>
+                                  {
+                                    param.name
+                                  }
 
+                                  {param.required && (
+                                    <b>
+                                      *
+                                    </b>
+                                  )}
+                                </label>
+
+                                <input
+                                  value={
+                                    params[
+                                      param
+                                        .name
+                                    ] ||
+                                    ""
+                                  }
+                                  onChange={(
+                                    e
+                                  ) =>
+                                    changeParam(
+                                      param.name,
+                                      e.target
+                                        .value
+                                    )
+                                  }
+                                  placeholder={
+                                    param.placeholder ||
+                                    param.description ||
+                                    `Masukkan ${param.name}`
+                                  }
+                                />
+
+                              </div>
+                            )
+                          )}
+
+                          <button
+                            className="execute-btn"
+                            onClick={
+                              executeEndpoint
+                            }
+                            disabled={
+                              loading
+                            }
+                          >
+                            {loading
+                              ? "EXECUTING..."
+                              : "EXECUTE"}
+                          </button>
+
+                        </div>
+                      )}
+
+                      {/* REQUEST URL */}
+
+                      {requestUrl && (
+                        <div className="result-section">
+
+                          <div className="result-head">
+                            <span>
+                              REQUEST URL
+                            </span>
+
+                            <button
+                              onClick={() =>
+                                copyText(
+                                  requestUrl
+                                )
+                              }
+                            >
+                              Copy
+                            </button>
+                          </div>
+
+                          <pre>
+                            {requestUrl}
+                          </pre>
+
+                        </div>
+                      )}
+
+                      {/* ERROR */}
+
+                      {error && (
+                        <div className="response-error">
+                          {error}
+                        </div>
+                      )}
+
+                      {/* RESPONSE */}
+
+                      {response && (
+                        <div className="result-section">
+
+                          <div className="result-head">
+
+                            <span>
+                              RESPONSE
+                            </span>
+
+                            <span
+                              className={
+                                response.ok
+                                  ? "status-ok"
+                                  : "status-fail"
+                              }
+                            >
+                              HTTP{" "}
+                              {
+                                response.status
+                              }
+                            </span>
+
+                            <button
+                              onClick={() =>
+                                copyText(
+                                  formatResponse(
+                                    response.data
+                                  )
+                                )
+                              }
+                            >
+                              Copy
+                            </button>
+
+                          </div>
+
+                          <pre className="json">
+                            {formatResponse(
+                              response.data
+                            )}
+                          </pre>
+
+                        </div>
+                      )}
+
+                    </div>
+
+                  </section>
+                );
+              }
+            )}
+
+          {!loadingDocs &&
+            !docsError &&
+            filteredDocs.length ===
+              0 && (
+              <div className="empty">
+                <div>
+                  Tidak ada endpoint
+                </div>
+
+                <small>
+                  Coba kata pencarian
+                  lainnya.
+                </small>
               </div>
-            );
-          })}
+            )}
 
-        </section>
-
-        {/* FOOTER */}
-        <footer className="footer">
-
-          <div className="footer-logo">
-            DINSTORE API
-          </div>
-
-          <div>
-            API v1.0.0
-          </div>
-
-          <div>
-            © {new Date().getFullYear()} DINSTORE
-          </div>
-
-        </footer>
+        </div>
 
       </main>
     </div>
