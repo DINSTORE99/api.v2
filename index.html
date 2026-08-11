@@ -4,215 +4,1367 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>DIN API</title>
+  <title>DINSTORE — All Downloader</title>
 
   <style>
     * {
       box-sizing: border-box;
     }
 
+    :root {
+      --bg: #07080a;
+      --card: #0d0f12;
+      --card2: #111318;
+      --border: #202329;
+      --text: #f5f5f5;
+      --muted: #858990;
+      --green: #49e58a;
+      --red: #ff6868;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background: #08090b;
-      color: white;
+
+      background:
+        radial-gradient(
+          circle at 50% -10%,
+          rgba(255,255,255,.09),
+          transparent 35%
+        ),
+        var(--bg);
+
+      color: var(--text);
+
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
     }
 
-    .container {
-      width: min(900px, 92%);
-      margin: auto;
-      padding: 80px 0;
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    /* =========================
+       HEADER
+    ========================= */
+
+    header {
+      height: 72px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      padding: 0 6%;
+
+      border-bottom: 1px solid var(--border);
+
+      background: rgba(7,8,10,.8);
+
+      backdrop-filter: blur(15px);
+
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     .logo {
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
+
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 12px;
+
+      border-radius: 11px;
+
       background: white;
-      color: black;
-      font-size: 24px;
-      font-weight: bold;
+      color: #08090b;
+
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .brand-name {
+      font-weight: 800;
+      letter-spacing: -.3px;
+    }
+
+    .brand-sub {
+      margin-top: 2px;
+
+      color: #666;
+
+      font-size: 9px;
+      letter-spacing: 1.5px;
+    }
+
+    .online {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      color: #aaa;
+
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .online-dot {
+      width: 7px;
+      height: 7px;
+
+      border-radius: 50%;
+
+      background: var(--green);
+
+      box-shadow:
+        0 0 14px rgba(73,229,138,.8);
+    }
+
+    /* =========================
+       MAIN
+    ========================= */
+
+    main {
+      width: min(900px, 92%);
+      margin: auto;
+
+      padding: 90px 0 70px;
+    }
+
+    .hero {
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+
+      padding: 7px 12px;
+
+      border: 1px solid var(--border);
+
+      border-radius: 999px;
+
+      color: #999;
+
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+
+    .badge span {
+      width: 6px;
+      height: 6px;
+
+      border-radius: 50%;
+
+      background: var(--green);
     }
 
     h1 {
-      margin-top: 20px;
-      font-size: 48px;
+      margin: 20px 0 12px;
+
+      font-size: clamp(40px, 8vw, 70px);
+
+      letter-spacing: -4px;
+
+      line-height: .95;
     }
 
-    p {
-      color: #888;
-      line-height: 1.6;
+    .hero p {
+      max-width: 570px;
+
+      margin: auto;
+
+      color: var(--muted);
+
+      line-height: 1.7;
+
+      font-size: 15px;
     }
 
-    .card {
-      margin-top: 35px;
+    /* =========================
+       DOWNLOADER
+    ========================= */
+
+    .downloader {
+      margin-top: 45px;
+
       padding: 25px;
-      border: 1px solid #222;
-      border-radius: 16px;
-      background: #0d0f12;
+
+      border: 1px solid var(--border);
+
+      border-radius: 20px;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(255,255,255,.035),
+          transparent
+        ),
+        var(--card);
+
+      box-shadow:
+        0 30px 80px rgba(0,0,0,.3);
     }
 
-    .method {
-      color: #4ade80;
-      font-weight: bold;
-      font-size: 13px;
+    .input-title {
+      margin-bottom: 10px;
+
+      color: #aaa;
+
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .input-box {
+      display: flex;
+      gap: 10px;
     }
 
     input {
       width: 100%;
-      margin-top: 15px;
-      padding: 15px;
+      height: 54px;
 
-      border: 1px solid #333;
-      border-radius: 10px;
+      padding: 0 17px;
+
+      border: 1px solid #292d33;
+
+      border-radius: 11px;
+
+      outline: none;
 
       background: #08090b;
+
       color: white;
-      outline: none;
     }
 
-    button {
-      width: 100%;
-      margin-top: 12px;
-      padding: 15px;
+    input::placeholder {
+      color: #555;
+    }
+
+    input:focus {
+      border-color: #555;
+    }
+
+    #downloadBtn {
+      min-width: 145px;
+
+      height: 54px;
 
       border: 0;
-      border-radius: 10px;
+
+      border-radius: 11px;
 
       background: white;
-      color: black;
 
-      font-weight: bold;
-      cursor: pointer;
+      color: #08090b;
+
+      font-weight: 800;
     }
 
-    button:disabled {
+    #downloadBtn:hover {
+      background: #e7e7e7;
+    }
+
+    #downloadBtn:disabled {
       opacity: .5;
+
+      cursor: wait;
+    }
+
+    .examples {
+      display: flex;
+      gap: 8px;
+
+      margin-top: 13px;
+
+      color: #555;
+
+      font-size: 11px;
+    }
+
+    .examples button {
+      padding: 0;
+
+      border: 0;
+
+      background: transparent;
+
+      color: #888;
+    }
+
+    /* =========================
+       ERROR
+    ========================= */
+
+    .error {
+      display: none;
+
+      margin-top: 20px;
+
+      padding: 17px;
+
+      border: 1px solid #432326;
+
+      border-radius: 12px;
+
+      background: #180d0f;
+
+      color: #ff8181;
+
+      font-size: 13px;
+    }
+
+    /* =========================
+       RESULT
+    ========================= */
+
+    #result {
+      display: none;
+
+      margin-top: 25px;
+    }
+
+    .result-card {
+      overflow: hidden;
+
+      border: 1px solid var(--border);
+
+      border-radius: 18px;
+
+      background: var(--card);
+    }
+
+    .preview {
+      display: grid;
+
+      grid-template-columns: 220px 1fr;
+
+      gap: 25px;
+
+      padding: 20px;
+    }
+
+    .thumbnail {
+      width: 100%;
+      height: 300px;
+
+      object-fit: cover;
+
+      border-radius: 12px;
+
+      background: #050607;
+    }
+
+    .info {
+      padding: 8px 0;
+    }
+
+    .platform {
+      display: inline-block;
+
+      padding: 6px 9px;
+
+      border-radius: 6px;
+
+      background: #17191d;
+
+      color: #aaa;
+
+      font-size: 10px;
+
+      font-weight: 800;
+
+      text-transform: uppercase;
+    }
+
+    .info h2 {
+      margin: 18px 0 10px;
+
+      font-size: 21px;
+
+      line-height: 1.4;
+    }
+
+    .author {
+      color: #888;
+
+      font-size: 13px;
+    }
+
+    .duration {
+      display: inline-block;
+
+      margin-top: 15px;
+
+      color: #666;
+
+      font-size: 12px;
+    }
+
+    /* =========================
+       MUSIC
+    ========================= */
+
+    .music {
+      margin-top: 22px;
+
+      padding: 14px;
+
+      border: 1px solid var(--border);
+
+      border-radius: 10px;
+
+      background: #090a0c;
+    }
+
+    .music-label {
+      color: #555;
+
+      font-size: 9px;
+
+      letter-spacing: 1.5px;
+
+      font-weight: 800;
+    }
+
+    .music-title {
+      margin-top: 7px;
+
+      font-size: 13px;
+
+      font-weight: 700;
+    }
+
+    .music-author {
+      margin-top: 4px;
+
+      color: #777;
+
+      font-size: 11px;
+    }
+
+    /* =========================
+       DOWNLOADS
+    ========================= */
+
+    .downloads {
+      padding: 20px;
+
+      border-top: 1px solid var(--border);
+    }
+
+    .downloads-title {
+      margin-bottom: 12px;
+
+      color: #777;
+
+      font-size: 11px;
+
+      font-weight: 800;
+
+      letter-spacing: 1px;
+    }
+
+    .download-list {
+      display: grid;
+
+      gap: 8px;
+    }
+
+    .download-link {
+      display: flex;
+
+      align-items: center;
+      justify-content: space-between;
+
+      padding: 14px 15px;
+
+      border: 1px solid var(--border);
+
+      border-radius: 10px;
+
+      background: #090a0c;
+
+      color: white;
+
+      text-decoration: none;
+
+      font-size: 13px;
+
+      font-weight: 700;
+    }
+
+    .download-link:hover {
+      background: var(--card2);
+
+      border-color: #34383e;
+    }
+
+    .download-arrow {
+      color: #777;
+
+      font-size: 16px;
+    }
+
+    /* =========================
+       JSON
+    ========================= */
+
+    .json-section {
+      margin-top: 25px;
+    }
+
+    .json-header {
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      margin-bottom: 10px;
+    }
+
+    .json-header span {
+      color: #666;
+
+      font-size: 10px;
+
+      letter-spacing: 1.5px;
+    }
+
+    .copy-btn {
+      padding: 7px 10px;
+
+      border: 1px solid var(--border);
+
+      border-radius: 7px;
+
+      background: transparent;
+
+      color: #999;
+
+      font-size: 10px;
     }
 
     pre {
-      margin-top: 20px;
-      padding: 20px;
-
       overflow: auto;
 
-      border-radius: 10px;
+      margin: 0;
+
+      padding: 18px;
+
+      border: 1px solid var(--border);
+
+      border-radius: 12px;
 
       background: #050607;
-      color: #aaa;
 
-      line-height: 1.6;
+      color: #aeb3b9;
+
+      font-family: monospace;
+
+      font-size: 11px;
+
+      line-height: 1.7;
     }
 
-    .status {
-      display: inline-block;
-      margin-top: 15px;
-      padding: 7px 12px;
+    /* =========================
+       FOOTER
+    ========================= */
 
-      border-radius: 999px;
+    footer {
+      padding: 30px;
 
-      background: #102218;
-      color: #4ade80;
+      border-top: 1px solid var(--border);
 
-      font-size: 12px;
+      text-align: center;
+
+      color: #555;
+
+      font-size: 10px;
+
+      letter-spacing: .5px;
+    }
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media (max-width: 650px) {
+
+      header {
+        padding: 0 20px;
+      }
+
+      .online {
+        display: none;
+      }
+
+      main {
+        padding-top: 55px;
+      }
+
+      h1 {
+        letter-spacing: -2.5px;
+      }
+
+      .downloader {
+        padding: 17px;
+      }
+
+      .input-box {
+        flex-direction: column;
+      }
+
+      #downloadBtn {
+        width: 100%;
+      }
+
+      .preview {
+        grid-template-columns: 1fr;
+      }
+
+      .thumbnail {
+        height: 390px;
+      }
+
+      .info h2 {
+        font-size: 18px;
+      }
     }
   </style>
 </head>
 
 <body>
 
-  <main class="container">
+<header>
 
-    <div class="logo">D</div>
+  <div class="brand">
 
-    <h1>DIN API</h1>
+    <div class="logo">
+      D
+    </div>
 
-    <p>
-      REST API untuk berbagai kebutuhan.
-      Gunakan endpoint DIN API melalui website ini.
-    </p>
-
-    <span class="status">
-      ● API ONLINE
-    </span>
-
-    <div class="card">
-
-      <div class="method">
-        GET /api/tiktok
+    <div>
+      <div class="brand-name">
+        DINSTORE
       </div>
 
-      <h2>TikTok Downloader</h2>
+      <div class="brand-sub">
+        ALL DOWNLOADER API
+      </div>
+    </div>
 
-      <p>
-        Masukkan URL TikTok untuk menguji endpoint.
-      </p>
+  </div>
+
+  <div class="online">
+    <span class="online-dot"></span>
+    API ONLINE
+  </div>
+
+</header>
+
+
+<main>
+
+  <!-- HERO -->
+
+  <section class="hero">
+
+    <div class="badge">
+      <span></span>
+      DINSTORE API v1.0
+    </div>
+
+    <h1>
+      Download Anything.
+    </h1>
+
+    <p>
+      Download video dan audio dari platform yang didukung
+      menggunakan satu API sederhana.
+    </p>
+
+  </section>
+
+
+  <!-- DOWNLOADER -->
+
+  <section class="downloader">
+
+    <div class="input-title">
+      Tempel URL
+    </div>
+
+    <div class="input-box">
 
       <input
         id="url"
         type="url"
-        placeholder="https://vt.tiktok.com/..."
+        autocomplete="off"
+        placeholder="https://www.instagram.com/reel/... atau TikTok..."
       >
 
-      <button id="button" onclick="testAPI()">
-        TEST API
+      <button
+        id="downloadBtn"
+        onclick="download()"
+      >
+        Download
       </button>
-
-      <pre id="result">Belum ada request.</pre>
 
     </div>
 
-  </main>
+    <div class="examples">
 
-  <script>
-    async function testAPI() {
+      <span>Contoh:</span>
 
-      const input = document.getElementById("url");
-      const button = document.getElementById("button");
-      const result = document.getElementById("result");
+      <button
+        onclick="setExample('https://vt.tiktok.com/ZS4c5fT85/')"
+      >
+        TikTok
+      </button>
 
-      const url = input.value.trim();
+      <button
+        onclick="setExample('https://www.instagram.com/reel/Db5Z25ThjwH/')"
+      >
+        Instagram
+      </button>
 
-      if (!url) {
-        result.textContent = "Masukkan URL TikTok terlebih dahulu.";
-        return;
+    </div>
+
+  </section>
+
+
+  <!-- ERROR -->
+
+  <div
+    id="error"
+    class="error"
+  ></div>
+
+
+  <!-- RESULT -->
+
+  <section id="result">
+
+    <div class="result-card">
+
+      <div class="preview">
+
+        <img
+          id="thumbnail"
+          class="thumbnail"
+          src=""
+          alt="Thumbnail"
+        >
+
+        <div class="info">
+
+          <span
+            id="platform"
+            class="platform"
+          >
+            —
+          </span>
+
+          <h2 id="title">
+            —
+          </h2>
+
+          <div
+            id="author"
+            class="author"
+          >
+            —
+          </div>
+
+          <span
+            id="duration"
+            class="duration"
+          >
+          </span>
+
+          <div
+            id="music"
+            class="music"
+          >
+
+            <div class="music-label">
+              MUSIC
+            </div>
+
+            <div
+              id="musicTitle"
+              class="music-title"
+            >
+              —
+            </div>
+
+            <div
+              id="musicAuthor"
+              class="music-author"
+            >
+              —
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="downloads">
+
+        <div class="downloads-title">
+          DOWNLOAD
+        </div>
+
+        <div
+          id="downloadList"
+          class="download-list"
+        ></div>
+
+      </div>
+
+    </div>
+
+
+    <!-- JSON -->
+
+    <div class="json-section">
+
+      <div class="json-header">
+
+        <span>
+          RAW JSON RESPONSE
+        </span>
+
+        <button
+          class="copy-btn"
+          onclick="copyJSON()"
+        >
+          COPY
+        </button>
+
+      </div>
+
+      <pre id="json"></pre>
+
+    </div>
+
+  </section>
+
+</main>
+
+
+<footer>
+  DINSTORE © 2026 · All Downloader API
+</footer>
+
+
+<script>
+
+  const API =
+    "/api/all-downloader";
+
+
+  let lastJSON = null;
+
+
+  // ========================================
+  // EXAMPLE
+  // ========================================
+
+  function setExample(url) {
+
+    document.getElementById("url").value = url;
+
+  }
+
+
+  // ========================================
+  // DOWNLOAD
+  // ========================================
+
+  async function download() {
+
+    const input =
+      document.getElementById("url");
+
+    const button =
+      document.getElementById("downloadBtn");
+
+    const error =
+      document.getElementById("error");
+
+    const result =
+      document.getElementById("result");
+
+
+    const url =
+      input.value.trim();
+
+
+    if (!url) {
+
+      showError(
+        "Masukkan URL terlebih dahulu."
+      );
+
+      return;
+
+    }
+
+
+    // RESET
+
+    error.style.display = "none";
+
+    result.style.display = "none";
+
+
+    button.disabled = true;
+
+    button.textContent =
+      "Memproses...";
+
+
+    try {
+
+      const endpoint =
+        API +
+        "?url=" +
+        encodeURIComponent(url);
+
+
+      const response =
+        await fetch(endpoint);
+
+
+      const data =
+        await response.json();
+
+
+      lastJSON = data;
+
+
+      if (!response.ok || data.status === false) {
+
+        throw new Error(
+          data.message ||
+          "Gagal memproses URL."
+        );
+
       }
 
-      button.disabled = true;
-      button.textContent = "Loading...";
 
-      result.textContent = "Menghubungi DIN API...";
+      renderResult(data);
 
-      try {
 
-        const endpoint =
-          "/api/tiktok?url=" +
-          encodeURIComponent(url);
+    } catch (err) {
 
-        const response = await fetch(endpoint);
+      showError(
+        err.message ||
+        "Terjadi kesalahan."
+      );
 
-        const data = await response.json();
-
-        result.textContent =
-          JSON.stringify(data, null, 2);
-
-      } catch (error) {
-
-        result.textContent = JSON.stringify({
-          success: false,
-          message: error.message
-        }, null, 2);
-
-      }
+    } finally {
 
       button.disabled = false;
-      button.textContent = "TEST API";
+
+      button.textContent =
+        "Download";
+
     }
-  </script>
+
+  }
+
+
+  // ========================================
+  // RENDER RESULT
+  // ========================================
+
+  function renderResult(data) {
+
+    const result =
+      document.getElementById("result");
+
+    const r =
+      data.result || {};
+
+
+    result.style.display =
+      "block";
+
+
+    // PLATFORM
+
+    document.getElementById(
+      "platform"
+    ).textContent =
+      data.platform ||
+      "Unknown";
+
+
+    // TITLE
+
+    document.getElementById(
+      "title"
+    ).textContent =
+      r.title?.trim() ||
+      "Media dari " +
+      (data.platform || "platform");
+
+
+    // AUTHOR
+
+    document.getElementById(
+      "author"
+    ).textContent =
+      r.author ||
+      r.owner ||
+      "Unknown";
+
+
+    // THUMBNAIL
+
+    const thumbnail =
+      document.getElementById(
+        "thumbnail"
+      );
+
+
+    if (r.thumbnail) {
+
+      thumbnail.src =
+        r.thumbnail;
+
+      thumbnail.style.display =
+        "block";
+
+    } else {
+
+      thumbnail.style.display =
+        "none";
+
+    }
+
+
+    // DURATION
+
+    document.getElementById(
+      "duration"
+    ).textContent =
+      r.duration
+        ? r.duration + " detik"
+        : "";
+
+
+    // MUSIC
+
+    const music =
+      document.getElementById(
+        "music"
+      );
+
+
+    if (r.music) {
+
+      music.style.display =
+        "block";
+
+
+      document.getElementById(
+        "musicTitle"
+      ).textContent =
+        r.music.title ||
+        "Original Sound";
+
+
+      document.getElementById(
+        "musicAuthor"
+      ).textContent =
+        r.music.author ||
+        "";
+
+    } else {
+
+      music.style.display =
+        "none";
+
+    }
+
+
+    // DOWNLOAD LINKS
+
+    const list =
+      document.getElementById(
+        "downloadList"
+      );
+
+
+    list.innerHTML = "";
+
+
+    if (
+      Array.isArray(r.downloads)
+    ) {
+
+      r.downloads.forEach(
+        item => {
+
+          if (!item.url)
+            return;
+
+
+          addDownload(
+            item.label ||
+            "Download",
+            item.url
+          );
+
+        }
+      );
+
+    }
+
+
+    if (
+      Array.isArray(r.links)
+    ) {
+
+      r.links.forEach(
+        (url, index) => {
+
+          let label =
+            "Download";
+
+
+          if (index === 0)
+            label = "HD Video";
+
+          else if (index === 1)
+            label = "SD Video";
+
+          else if (index === 2)
+            label = "Video Watermark";
+
+
+          addDownload(
+            label,
+            url
+          );
+
+        }
+      );
+
+    }
+
+
+    if (!list.children.length) {
+
+      list.innerHTML =
+        "<div style='color:#777;font-size:12px'>" +
+        "Tidak ada link download." +
+        "</div>";
+
+    }
+
+
+    // JSON
+
+    document.getElementById(
+      "json"
+    ).textContent =
+      JSON.stringify(
+        data,
+        null,
+        2
+      );
+
+
+    // SCROLL
+
+    result.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+
+  }
+
+
+  // ========================================
+  // ADD DOWNLOAD
+  // ========================================
+
+  function addDownload(
+    label,
+    url
+  ) {
+
+    const list =
+      document.getElementById(
+        "downloadList"
+      );
+
+
+    const a =
+      document.createElement("a");
+
+
+    a.className =
+      "download-link";
+
+
+    a.href =
+      url;
+
+
+    a.target =
+      "_blank";
+
+
+    a.rel =
+      "noopener noreferrer";
+
+
+    a.innerHTML = `
+      <span>${escapeHTML(label)}</span>
+      <span class="download-arrow">↗</span>
+    `;
+
+
+    list.appendChild(a);
+
+  }
+
+
+  // ========================================
+  // ERROR
+  // ========================================
+
+  function showError(message) {
+
+    const error =
+      document.getElementById(
+        "error"
+      );
+
+
+    error.textContent =
+      message;
+
+
+    error.style.display =
+      "block";
+
+  }
+
+
+  // ========================================
+  // COPY JSON
+  // ========================================
+
+  async function copyJSON() {
+
+    if (!lastJSON)
+      return;
+
+
+    await navigator.clipboard.writeText(
+      JSON.stringify(
+        lastJSON,
+        null,
+        2
+      )
+    );
+
+
+    const button =
+      document.querySelector(
+        ".copy-btn"
+      );
+
+
+    button.textContent =
+      "COPIED";
+
+
+    setTimeout(() => {
+
+      button.textContent =
+        "COPY";
+
+    }, 1500);
+
+  }
+
+
+  // ========================================
+  // ESCAPE
+  // ========================================
+
+  function escapeHTML(value) {
+
+    return String(value)
+
+      .replaceAll("&", "&amp;")
+
+      .replaceAll("<", "&lt;")
+
+      .replaceAll(">", "&gt;")
+
+      .replaceAll('"', "&quot;")
+
+      .replaceAll("'", "&#039;");
+
+  }
+
+
+  // ========================================
+  // ENTER
+  // ========================================
+
+  document
+    .getElementById("url")
+    .addEventListener(
+      "keydown",
+      e => {
+
+        if (
+          e.key === "Enter"
+        ) {
+
+          download();
+
+        }
+
+      }
+    );
+
+</script>
 
 </body>
 </html>
