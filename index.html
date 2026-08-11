@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>DIN API</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #08090b;
+      color: white;
+    }
+
+    .container {
+      width: min(900px, 92%);
+      margin: auto;
+      padding: 80px 0;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: white;
+      color: black;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    h1 {
+      margin-top: 20px;
+      font-size: 48px;
+    }
+
+    p {
+      color: #888;
+      line-height: 1.6;
+    }
+
+    .card {
+      margin-top: 35px;
+      padding: 25px;
+      border: 1px solid #222;
+      border-radius: 16px;
+      background: #0d0f12;
+    }
+
+    .method {
+      color: #4ade80;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    input {
+      width: 100%;
+      margin-top: 15px;
+      padding: 15px;
+
+      border: 1px solid #333;
+      border-radius: 10px;
+
+      background: #08090b;
+      color: white;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 15px;
+
+      border: 0;
+      border-radius: 10px;
+
+      background: white;
+      color: black;
+
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .5;
+    }
+
+    pre {
+      margin-top: 20px;
+      padding: 20px;
+
+      overflow: auto;
+
+      border-radius: 10px;
+
+      background: #050607;
+      color: #aaa;
+
+      line-height: 1.6;
+    }
+
+    .status {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 7px 12px;
+
+      border-radius: 999px;
+
+      background: #102218;
+      color: #4ade80;
+
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+
+    <div class="logo">D</div>
+
+    <h1>DIN API</h1>
+
+    <p>
+      REST API untuk berbagai kebutuhan.
+      Gunakan endpoint DIN API melalui website ini.
+    </p>
+
+    <span class="status">
+      ● API ONLINE
+    </span>
+
+    <div class="card">
+
+      <div class="method">
+        GET /api/tiktok
+      </div>
+
+      <h2>TikTok Downloader</h2>
+
+      <p>
+        Masukkan URL TikTok untuk menguji endpoint.
+      </p>
+
+      <input
+        id="url"
+        type="url"
+        placeholder="https://vt.tiktok.com/..."
+      >
+
+      <button id="button" onclick="testAPI()">
+        TEST API
+      </button>
+
+      <pre id="result">Belum ada request.</pre>
+
+    </div>
+
+  </main>
+
+  <script>
+    async function testAPI() {
+
+      const input = document.getElementById("url");
+      const button = document.getElementById("button");
+      const result = document.getElementById("result");
+
+      const url = input.value.trim();
+
+      if (!url) {
+        result.textContent = "Masukkan URL TikTok terlebih dahulu.";
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Loading...";
+
+      result.textContent = "Menghubungi DIN API...";
+
+      try {
+
+        const endpoint =
+          "/api/tiktok?url=" +
+          encodeURIComponent(url);
+
+        const response = await fetch(endpoint);
+
+        const data = await response.json();
+
+        result.textContent =
+          JSON.stringify(data, null, 2);
+
+      } catch (error) {
+
+        result.textContent = JSON.stringify({
+          success: false,
+          message: error.message
+        }, null, 2);
+
+      }
+
+      button.disabled = false;
+      button.textContent = "TEST API";
+    }
+  </script>
+
+</body>
+</html>
