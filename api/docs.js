@@ -1,5 +1,5 @@
 export default function handler(req, res) {
-  return res.status(200).json({
+  res.status(200).json({
     success: true,
     creator: "DINSTORE",
     name: "DINSTORE API",
@@ -16,8 +16,7 @@ export default function handler(req, res) {
             method: "GET",
             path: "/api/tiktok",
 
-            description:
-              "Download video TikTok tanpa watermark.",
+            description: "Download video TikTok tanpa watermark.",
 
             parameters: [
               {
@@ -37,8 +36,7 @@ export default function handler(req, res) {
             method: "GET",
             path: "/api/instagram",
 
-            description:
-              "Download video Instagram.",
+            description: "Download video Instagram.",
 
             parameters: [
               {
@@ -63,28 +61,27 @@ export default function handler(req, res) {
           {
             name: "QRIS Generator",
             method: "GET",
-            path: "/api/qrisgen",
+            path: "/api/tools/qrisgen",
 
-            description:
-              "Generate QRIS berdasarkan nominal.",
+            description: "Generate QRIS dengan nominal tertentu.",
 
             parameters: [
+              {
+                name: "nominal",
+                type: "number",
+                required: true,
+                description: "Nominal pembayaran"
+              },
               {
                 name: "url",
                 type: "string",
                 required: true,
                 description: "URL QRIS"
-              },
-              {
-                name: "nominal",
-                type: "number",
-                required: true,
-                description: "Nominal"
               }
             ],
 
             example:
-              "/api/qrisgen?url=https://example.com/qris.jpg&nominal=10000"
+              "/api/tools/qrisgen?nominal=10000&url=https://..."
           }
         ]
       }
